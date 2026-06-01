@@ -25,7 +25,7 @@ const {
 
 const mapContainer = ref<HTMLElement | null>(null)
 const centroids = ref<Map<string, Sa3Centroid>>(new Map())
-const notebookOpen = ref(false)
+const panelOpen = ref(true)
 
 const localOrigin = ref('Canterbury')
 const localDestination = ref(DEFAULT_DESTINATION_SA3)
@@ -47,199 +47,165 @@ const costPeriodLabel = computed(() =>
   aggregationMode.value === 'weekly' ? 'per week' : 'per day',
 )
 
+const showMobilePanel = computed(() => panelOpen.value && hasRouteSelection.value)
+
 onMounted(async () => {
   centroids.value = await loadSa3Centroids()
   story.setSelectedOrigin(localOrigin.value)
   story.setSelectedDestination(localDestination.value)
-  notebookOpen.value = true
 })
 
 watch([localOrigin, localDestination], ([origin, destination]) => {
   story.setSelectedOrigin(origin)
   story.setSelectedDestination(destination)
-  notebookOpen.value = Boolean(origin && destination)
+  panelOpen.value = Boolean(origin && destination)
 })
-
-function toggleNotebook() {
-  notebookOpen.value = !notebookOpen.value
-}
 </script>
 
 <template>
-  <section aria-labelledby="explorer-heading" class="relative">
-    <h2 id="explorer-heading" class="story-display mb-2 text-3xl rotate-1">
-      A-to-B map explorer
-    </h2>
-    <p class="mb-4 max-w-2xl text-sm text-stone-600">
-      Trace a rough arc between SA3 centroids and open the notebook for rush-hour and cost
-      comparisons.
-    </p>
-
-    <div class="story-map-controls mb-3 flex flex-col gap-2 md:hidden">
-      <div class="story-polaroid story-polaroid--origin -rotate-2 relative">
-        <label class="story-label block" for="origin-select-mobile">Origin</label>
-        <select
-          id="origin-select-mobile"
-          v-model="localOrigin"
-          class="story-select mt-1 w-full"
-        >
-          <option v-for="name in sa3Options" :key="`om-${name}`" :value="name">{{ name }}</option>
-        </select>
-      </div>
-      <div class="story-polaroid story-polaroid--dest rotate-2 relative">
-        <label class="story-label block" for="destination-select-mobile">Destination</label>
-        <select
-          id="destination-select-mobile"
-          v-model="localDestination"
-          class="story-select mt-1 w-full"
-        >
-          <option v-for="name in sa3Options" :key="`dm-${name}`" :value="name">{{ name }}</option>
-        </select>
-      </div>
+  <section class="tl-section" aria-labelledby="explorer-heading">
+    <div>
+      <h2 id="explorer-heading" class="tl-h2">A-to-B map explorer</h2>
+      <p class="tl-body-muted mt-2 max-w-2xl">
+        Select a corridor to trace the journey on the map and compare rush-hour travel with mode
+        costs.
+      </p>
     </div>
 
-    <div class="story-map-shell relative">
-      <div class="story-polaroid story-polaroid--origin -rotate-2 hidden md:block">
-        <label class="story-label block" for="origin-select">Origin</label>
-        <select id="origin-select" v-model="localOrigin" class="story-select mt-1 w-full">
-          <option v-for="name in sa3Options" :key="`o-${name}`" :value="name">
-            {{ name }}
-          </option>
-        </select>
+    <div class="tl-map-layout">
+      <div class="tl-map-toolbar">
+        <div class="tl-field">
+          <label class="tl-label" for="origin-select">Origin</label>
+          <select id="origin-select" v-model="localOrigin" class="tl-select">
+            <option v-for="name in sa3Options" :key="`o-${name}`" :value="name">{{ name }}</option>
+          </select>
+        </div>
+        <div class="tl-field">
+          <label class="tl-label" for="destination-select">Destination</label>
+          <select id="destination-select" v-model="localDestination" class="tl-select">
+            <option v-for="name in sa3Options" :key="`d-${name}`" :value="name">{{ name }}</option>
+          </select>
+        </div>
       </div>
 
-      <div class="story-polaroid story-polaroid--dest rotate-2 hidden md:block">
-        <label class="story-label block" for="destination-select">Destination</label>
-        <select id="destination-select" v-model="localDestination" class="story-select mt-1 w-full">
-          <option v-for="name in sa3Options" :key="`d-${name}`" :value="name">{{ name }}</option>
-        </select>
-      </div>
+      <div class="tl-map-layout__main">
+        <div class="tl-map-frame">
+          <div
+            ref="mapContainer"
+            class="tl-map-canvas"
+            role="region"
+            :aria-label="`Commute map from ${localOrigin} to ${localDestination}`"
+            :aria-busy="isMapLoading"
+            aria-live="polite"
+          />
 
-      <div
-        ref="mapContainer"
-        class="story-map-canvas h-[min(68vh,520px)] w-full"
-        role="region"
-        :aria-label="`Commute map from ${localOrigin} to ${localDestination}`"
-        :aria-busy="isMapLoading"
-        aria-live="polite"
-      />
+          <div v-if="isMapLoading" class="tl-map-loading" role="status">
+            <p class="tl-label normal-case">Loading map…</p>
+          </div>
 
-      <p
-        v-if="isMapLoading"
-        class="story-label pointer-events-none absolute inset-0 flex items-center justify-center bg-story-canvas/60 normal-case"
-        role="status"
-      >
-        Loading map…
-      </p>
+          <p v-if="mapError" class="tl-alert absolute bottom-4 left-4 right-4 z-10" role="alert">
+            {{ mapError }}
+          </p>
+        </div>
 
-      <p v-if="mapError" class="story-alert absolute bottom-4 left-4 right-4 z-10" role="alert">
-        {{ mapError }}
-      </p>
+        <button
+          type="button"
+          class="tl-btn-ghost mb-3 md:hidden"
+          :aria-expanded="showMobilePanel"
+          aria-controls="route-detail-panel"
+          @click="panelOpen = !panelOpen"
+        >
+          {{ showMobilePanel ? 'Hide' : 'Show' }} route details
+        </button>
 
-      <button
-        type="button"
-        class="story-notebook-tab md:hidden"
-        :aria-expanded="notebookOpen"
-        aria-controls="route-notebook"
-        @click="toggleNotebook"
-      >
-        {{ notebookOpen ? 'Hide' : 'Open' }} notebook
-      </button>
+        <aside
+          id="route-detail-panel"
+          class="tl-detail-panel tl-detail-panel--drawer"
+          :class="{ 'tl-detail-panel--closed': !showMobilePanel }"
+          :aria-hidden="!hasRouteSelection"
+        >
+          <p class="tl-kicker">Corridor</p>
+          <h3 class="tl-h2 mt-1">{{ routeSummary }}</h3>
 
-      <aside
-        id="route-notebook"
-        class="story-notebook"
-        :class="{ 'story-notebook--open': notebookOpen && hasRouteSelection }"
-        :aria-hidden="!notebookOpen || !hasRouteSelection"
-      >
-        <div class="story-notebook-inner">
-          <p class="story-kicker">Corridor notes</p>
-          <h3 class="story-display text-2xl">{{ routeSummary }}</h3>
-
-          <div class="mt-4 grid grid-cols-2 gap-3" role="group" aria-label="Rush hour comparison">
-            <div class="story-sketch-border bg-story-surface p-3 -rotate-1">
-              <p class="story-label">Rush hour</p>
-              <p class="story-metric text-3xl">
+          <div class="tl-comparison-grid mt-6" role="group" aria-label="Rush hour comparison">
+            <div class="tl-comparison-tile">
+              <p class="tl-label">Rush hour</p>
+              <p class="tl-metric-sm mt-2">
                 {{ trafficComparison.rushMinutes ?? '—' }}
-                <span class="text-lg">min</span>
+                <span class="tl-body text-lg"> min</span>
               </p>
-              <p class="text-xs text-stone-600">Driving</p>
+              <p class="tl-body-muted mt-1 text-xs">Driving</p>
             </div>
-            <div class="story-sketch-border bg-story-surface p-3 rotate-1">
-              <p class="story-label">Non-rush</p>
-              <p class="story-metric text-3xl">
+            <div class="tl-comparison-tile">
+              <p class="tl-label">Off-peak</p>
+              <p class="tl-metric-sm mt-2">
                 {{ trafficComparison.offPeakMinutes ?? '—' }}
-                <span class="text-lg">min</span>
+                <span class="tl-body text-lg"> min</span>
               </p>
-              <p class="text-xs text-stone-600">Driving</p>
+              <p class="tl-body-muted mt-1 text-xs">Driving</p>
             </div>
           </div>
 
           <p
             v-if="trafficComparison.penaltyMinutes"
-            class="story-annotation mt-3 text-sm"
+            class="tl-body mt-4 text-sm"
             aria-live="polite"
           >
-            Peak penalty: +{{ trafficComparison.penaltyMinutes }} mins vs off-peak
+            Peak penalty:
+            <strong class="text-tl-warning">+{{ trafficComparison.penaltyMinutes }} min</strong>
+            vs off-peak
           </p>
 
-          <div
-            class="mt-5 grid grid-cols-2 gap-3"
-            role="group"
-            aria-label="Mode cost comparison"
-          >
-            <div class="story-card bg-story-accent-surface -rotate-1 py-4">
-              <p class="story-label">Public transport</p>
-              <p class="story-metric text-3xl">
+          <div class="mt-6 grid gap-4 sm:grid-cols-2" role="group" aria-label="Mode cost comparison">
+            <div class="tl-stat-card tl-stat-card--accent py-4">
+              <p class="tl-label">Public transport</p>
+              <p class="tl-metric-sm mt-2">
                 <template v-if="isLoading">…</template>
                 <template v-else-if="ptModeCost !== null">${{ ptModeCost }}</template>
                 <template v-else>—</template>
               </p>
-              <p class="text-xs text-stone-600">Opal · {{ costPeriodLabel }}</p>
+              <p class="tl-body-muted mt-1 text-xs">Opal · {{ costPeriodLabel }}</p>
             </div>
-            <div class="story-card bg-story-secondary-surface rotate-1 py-4">
-              <p class="story-label">Private car</p>
-              <p class="story-metric text-3xl">
+            <div class="tl-stat-card tl-stat-card--secondary py-4">
+              <p class="tl-label">Private car</p>
+              <p class="tl-metric-sm mt-2">
                 <template v-if="isLoading">…</template>
                 <template v-else-if="carModeCost !== null">${{ carModeCost }}</template>
                 <template v-else>—</template>
               </p>
-              <p class="text-xs text-stone-600">Fuel + tolls · {{ costPeriodLabel }}</p>
+              <p class="tl-body-muted mt-1 text-xs">Fuel + tolls · {{ costPeriodLabel }}</p>
             </div>
           </div>
 
-          <table class="story-table mt-5 w-full text-xs" aria-labelledby="notebook-table-caption">
-            <caption id="notebook-table-caption" class="story-label mb-2 text-left">
-              Route comparison table
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col" class="story-th">Mode</th>
-                <th scope="col" class="story-th">Time (min)</th>
-                <th scope="col" class="story-th">Cost ($)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="mode in routeSnapshot?.modes ?? []"
-                :key="mode.mode"
-              >
-                <th scope="row" class="story-td">
-                  {{
-                    mode.mode === HTS_MODE_PUBLIC_TRANSPORT
-                      ? 'Public transport'
-                      : mode.mode === HTS_MODE_VEHICLE_DRIVER
-                        ? 'Private car'
-                        : mode.mode
-                  }}
-                </th>
-                <td class="story-td tabular-nums">{{ mode.time_minutes ?? '—' }}</td>
-                <td class="story-td tabular-nums">{{ mode.weekly_cost_aud ?? '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </aside>
+          <div class="tl-table-wrap mt-6">
+            <table class="tl-table text-xs" aria-labelledby="route-table-caption">
+              <caption id="route-table-caption" class="tl-label">Route comparison</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Time (min)</th>
+                  <th scope="col">Cost ($)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="mode in routeSnapshot?.modes ?? []" :key="mode.mode">
+                  <th scope="row">
+                    {{
+                      mode.mode === HTS_MODE_PUBLIC_TRANSPORT
+                        ? 'Public transport'
+                        : mode.mode === HTS_MODE_VEHICLE_DRIVER
+                          ? 'Private car'
+                          : mode.mode
+                    }}
+                  </th>
+                  <td class="tabular-nums">{{ mode.time_minutes ?? '—' }}</td>
+                  <td class="tabular-nums">{{ mode.weekly_cost_aud ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </aside>
+      </div>
     </div>
   </section>
 </template>

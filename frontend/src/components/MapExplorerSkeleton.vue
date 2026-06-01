@@ -5,13 +5,14 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="story-map-shell flex min-h-[min(68vh,520px)] items-center justify-center p-8"
-    role="status"
-    aria-live="polite"
-  >
-    <p class="story-label text-center normal-case">
-      {{ message ?? 'Sketching the map explorer…' }}
-    </p>
-  </div>
+  <section class="tl-section" aria-labelledby="map-skeleton-heading">
+    <h2 id="map-skeleton-heading" class="tl-h2">A-to-B map explorer</h2>
+    <div
+      class="tl-map-frame flex min-h-[min(68vh,520px)] items-center justify-center p-8"
+      role="status"
+      aria-live="polite"
+    >
+      <p class="tl-body-muted text-center">{{ message ?? 'Loading map explorer…' }}</p>
+    </div>
+  </section>
 </template>
