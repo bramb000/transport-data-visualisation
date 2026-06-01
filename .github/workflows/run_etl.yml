@@ -1,0 +1,76 @@
+# Weekly Supabase ETL — fetches commute metrics via TfNSW / OpenRouteService
+# and bulk-inserts results into Supabase PostgreSQL.
+#
+# Required GitHub repository secrets:
+#   SUPABASE_URL, SUPABASE_KEY, TFNSW_API_KEY, OPENROUTESERVICE_KEY
+#
+# Manual run: Actions → Run ETL Pipeline → Run workflow
+
+name: Run ETL Pipeline
+
+on:
+  schedule:
+    # Every Monday at 02:00 Australia/Sydney (AEST/AEDT aware)
+    - cron: '0 2 * * 1'
+      timezone: Australia/Sydney
+  workflow_dispatch:
+
+concurrency:
+  group: run-etl-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  etl:
+    name: Fetch commute data and push to Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      TFNSW_API_KEY: ${{ secrets.TFNSW_API_KEY }}
+      # Repository secret name → runtime env var expected by travel_engine.py
+      OPENROUTESERVICE_API_KEY: ${{ secrets.OPENROUTESERVICE_KEY }}
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install production dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate required secrets are present
+        run: |
+          set -euo pipefail
+          missing=()
+          for var in SUPABASE_URL SUPABASE_KEY TFNSW_API_KEY OPENROUTESERVICE_API_KEY; do
+            if [[ -z "${!var:-}" ]]; then
+              missing+=("$var")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required secrets or env vars: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Run ETL pipeline
+        run: |
+          set -euo pipefail
+          python etl_pipeline.py

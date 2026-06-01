@@ -1,0 +1,137 @@
+# Sydney Commute Compare — Cursor Rules
+
+## Project Overview
+Monorepo comparing Public Transport vs Private Car commute time and cost in Sydney, NSW.
+Backend: Python + FastAPI + Pandas + SQLite (MVP). Frontend: Vue 3 + MapLibre GL JS + ECharts + TailwindCSS.
+Maps & driving routes: MapTiler Cloud (not Mapbox). Public transport: TfNSW Trip Planner API (multimodal).
+
+---
+
+## Tech Stack (Strict)
+
+### Backend
+- Python 3.11+
+- FastAPI for REST API; Pydantic v2 for request/response models
+- Pandas for ETL transformations only — not in hot API request paths unless cached
+- SQLite for MVP persistence; design repositories for future BigQuery migration
+- HTTP clients: `httpx` (async preferred for API routes)
+- Env config via `pydantic-settings`; never hardcode API keys
+
+### Frontend
+- Vue 3 with Composition API and `<script setup lang="ts">` ONLY
+- No Options API, no Vue 2 patterns, no class components
+- Vite as bundler; TypeScript strict mode enabled
+- TailwindCSS for all styling — no inline styles except dynamic map/chart dimensions
+- MapLibre GL JS with MapTiler basemap tiles and style URLs
+- ECharts for Time vs Cost scatterplot
+- State: composables (`use*`) — no Pinia unless cross-view state becomes necessary
+
+### External APIs
+- **TfNSW Trip Planner API** — multimodal public transport (train, bus, ferry, light rail)
+- **MapTiler Cloud** — basemap tiles AND driving routing (distance, duration, polylines)
+- **NSW FuelCheck API** — live average fuel prices for car cost engine
+
+---
+
+## Domain Logic
+
+### Multimodal Opal Fares
+- Model full multimodal journeys from TfNSW Trip Planner responses
+- Apply Opal fare rules: mode-specific distance bands, transfer discounts, daily/weekly caps (document scope)
+- Cost engine must be pure logic in `cost_engine.py` — no HTTP calls inside
+- Document TfNSW tariff source URL on all fare constants
+
+### Car Cost & Vehicle Profiles
+- Support vehicle categories: Small Car, Medium Car, SUV, Ute/Van (defaults in config)
+- Each category has a default fuel consumption (L/100 km); user may override via API/UI
+- Formula: `car_cost = distance_km × (consumption_L_per_100km / 100) × fuel_price_per_litre`
+- Fuel price from FuelCheck (cached daily); tolls/parking excluded unless explicitly requested
+- Default consumption values live in `backend/app/config.py` and are exposed via API for the frontend
+
+### Comparison Quadrants (Time vs Cost scatterplot)
+- X-axis: Time (minutes), Y-axis: Cost (AUD)
+- Quadrants relative to dataset median unless user selects a baseline OD pair
+
+---
+
+## Code Style & Linting
+
+### Python
+- Formatter/linter: Ruff (line length 100)
+- Type hints required on all public functions
+- Docstrings on modules and public functions (Google style, brief)
+- Import order: stdlib → third-party → local
+- Tests: pytest; minimum 80% coverage on `cost_engine.py` and `services/`
+- No bare `except:`; catch specific exceptions
+- Async routes must not block the event loop
+
+### Vue / TypeScript
+- ESLint: `@vue/eslint-config-typescript` + `eslint-plugin-vue` (recommended)
+- Prettier for formatting (single quotes, trailing commas)
+- Components: PascalCase filenames (`CommuteMap.vue`)
+- Composables: camelCase with `use` prefix (`useCommuteData.ts`)
+- Props: `defineProps<T>()`; emits: `defineEmits<T>()`
+- No `any` without an inline comment explaining why
+
+---
+
+## Architecture Rules
+
+### Backend
+1. Routes → Services → Repositories → DB
+2. ETL is offline CLI only (`etl/run_pipeline.py`); never call ETL from HTTP handlers
+3. Cache TfNSW and MapTiler responses in SQLite with TTL (student project: 24h default is fine)
+4. Repository interfaces must not leak SQLite-specific SQL into services (BigQuery-ready)
+
+### Frontend
+1. API client → composable → component; components do not fetch directly
+2. Map polylines via MapLibre layers; geo logic in `useMap.ts`
+3. Vehicle consumption input: bind to composable, POST/GET via backend comparison endpoints
+
+---
+
+## Accessibility (Mandatory — Non-Negotiable)
+
+Every canvas, WebGL map, or chart visualization MUST have:
+
+1. HTML data table fallback (visible or via "View data table" toggle)
+2. Semantic `<table>` with `<caption>`, `<thead>`, `<tbody>`, `scope="col"` on `<th>`
+3. Map: `role="region"`, descriptive `aria-label`, `aria-live="polite"` route summaries
+4. Chart: `role="img"`, `aria-labelledby`; color is not the only differentiator
+5. Keyboard-navigable route list as map alternative
+6. WCAG 2.1 AA contrast; respect `prefers-reduced-motion`
+7. Never ship a map or chart without its table fallback
+
+---
+
+## Environment Variables
+
+```env
+# Backend
+TFNSW_API_KEY=
+MAPTILER_API_KEY=
+DATABASE_URL=sqlite:///./data/commute_compare.db
+CACHE_TTL_HOURS=24
+
+# Frontend
+VITE_API_BASE_URL=http://localhost:8000
+VITE_MAPTILER_API_KEY=
+```
+
+Never commit `.env`. Always update `.env.example` when adding variables.
+
+---
+
+## Git & Commits
+- Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`
+- Do not commit `backend/data/*.db`, `node_modules/`, or API keys
+
+---
+
+## What NOT To Do
+- Do not use Vue Options API, jQuery, or Bootstrap
+- Do not use Mapbox — use MapTiler Cloud exclusively
+- Do not put business logic in Vue components
+- Do not fetch TfNSW/FuelCheck from the frontend (MapTiler tiles only, with restricted key)
+- Do not skip accessibility table fallbacks
+- Do not use `console.log` in production code

@@ -1,0 +1,8 @@
+# Origin/destination pairs for batch ETL (Phase 2)
+# Example:
+# pairs:
+#   - id: parramatta-cbd
+#     origin: { lat: -33.8150, lon: 151.0010, label: "Parramatta" }
+#     destination: { lat: -33.8688, lon: 151.2093, label: "Sydney CBD" }
+
+pairs: []

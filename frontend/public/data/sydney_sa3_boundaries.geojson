@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "sa3_code": "11801", "sa3_name": "Penrith" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[150.62, -33.82], [150.78, -33.82], [150.78, -33.68], [150.62, -33.68], [150.62, -33.82]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "sa3_code": "11802", "sa3_name": "Blacktown" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[150.84, -33.82], [151.02, -33.82], [151.02, -33.68], [150.84, -33.68], [150.84, -33.82]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "sa3_code": "12503", "sa3_name": "Canterbury" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[151.02, -33.96], [151.16, -33.96], [151.16, -33.86], [151.02, -33.86], [151.02, -33.96]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "sa3_code": "12504", "sa3_name": "Strathfield - Burwood - Ashfield" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[151.06, -33.92], [151.18, -33.92], [151.18, -33.84], [151.06, -33.84], [151.06, -33.92]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "sa3_code": "11703", "sa3_name": "Sydney Inner City" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[151.18, -33.90], [151.24, -33.90], [151.24, -33.84], [151.18, -33.84], [151.18, -33.90]]]
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+# Origin/destination pairs for batch ETL cache warming.
+# Run: cd backend && python -m etl.run_pipeline
+#
+# Example entry:
+#   - id: campsie-central
+#     origin: { lat: -33.9116, lon: 151.1032, label: "Campsie Station" }
+#     destination: { lat: -33.8836, lon: 151.2057, label: "Central Station" }
+#     vehicle_profile_id: medium_car
+#     fuel_consumption_l_per_100km: 10.0
+#     fuel_suburb: Sydney
+
+pairs:
+  - id: campsie-central
+    origin:
+      lat: -33.9116
+      lon: 151.1032
+      label: "Campsie Station"
+      sa3: Canterbury
+    destination:
+      lat: -33.8836
+      lon: 151.2057
+      label: "Central Station"
+      sa3: Sydney Inner City
+    vehicle_profile_id: medium_car
+    fuel_consumption_l_per_100km: 10.0
+    fuel_suburb: Sydney
+
+  - id: campsie-burwood
+    origin:
+      lat: -33.9116
+      lon: 151.1032
+      label: "Campsie Station"
+      sa3: Canterbury
+    destination:
+      lat: -33.9185
+      lon: 151.1045
+      label: "Burwood"
+      sa3: Strathfield - Burwood - Ashfield
+    vehicle_profile_id: medium_car
+    fuel_suburb: Burwood
