@@ -8,6 +8,16 @@ import type {
   VehicleProfileId,
 } from '../types/commute'
 import { formatCurrency, formatDistanceKm, formatMinutes } from '../utils/formatters'
+import { isBackendApiConfigured } from '../utils/deployment'
+
+const DEFAULT_VEHICLE_PROFILES: VehicleProfile[] = [
+  { id: 'small_car', label: 'Small Car', default_consumption_l_per_100km: 6.5 },
+  { id: 'medium_car', label: 'Medium Car', default_consumption_l_per_100km: 8.0 },
+  { id: 'suv', label: 'SUV', default_consumption_l_per_100km: 11.0 },
+  { id: 'ute_van', label: 'Ute/Van', default_consumption_l_per_100km: 12.5 },
+]
+
+const backendApiEnabled = isBackendApiConfigured()
 
 const DEFAULT_ORIGIN: Coordinates = {
   lat: -33.9116,
@@ -88,6 +98,13 @@ const ptOptionRows = computed(() => {
 })
 
 onMounted(async () => {
+  if (!backendApiEnabled) {
+    vehicleProfiles.value = DEFAULT_VEHICLE_PROFILES
+    customFuelConsumption.value =
+      selectedVehicle.value?.default_consumption_l_per_100km ?? customFuelConsumption.value
+    return
+  }
+
   isLoadingProfiles.value = true
   errorMessage.value = null
   try {
@@ -155,6 +172,14 @@ async function runCalculation() {
       </h2>
       <p class="mt-1 text-sm text-slate-600">
         Enter origin and destination coordinates, choose a vehicle profile, then compare modes.
+      </p>
+      <p
+        v-if="!backendApiEnabled"
+        class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        role="status"
+      >
+        Live route calculation requires the FastAPI backend and is available in local development only.
+        The affordability map above uses report data on this deployment.
       </p>
 
       <form class="mt-6 grid gap-6 lg:grid-cols-2" @submit.prevent="runCalculation">
@@ -281,7 +306,7 @@ async function runCalculation() {
           <button
             type="submit"
             class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            :disabled="isCalculating || isLoadingProfiles"
+            :disabled="isCalculating || isLoadingProfiles || !backendApiEnabled"
           >
             {{ isCalculating ? 'Calculating…' : 'Compare commute' }}
           </button>

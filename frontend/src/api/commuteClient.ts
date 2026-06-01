@@ -3,8 +3,19 @@ import type {
   UserProfileSchema,
   VehicleProfilesResponse,
 } from '../types/commute'
+import { getApiBaseUrl, isBackendApiConfigured } from '../utils/deployment'
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+function requireApiBaseUrl(): string {
+  const baseUrl = getApiBaseUrl()
+  if (!baseUrl) {
+    throw new CommuteApiError(
+      'FastAPI backend is not configured for this deployment.',
+      0,
+      'Run locally with uvicorn or set VITE_API_BASE_URL to a hosted API.',
+    )
+  }
+  return baseUrl
+}
 
 export class CommuteApiError extends Error {
   readonly status: number
@@ -19,7 +30,7 @@ export class CommuteApiError extends Error {
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetch(`${requireApiBaseUrl()}${path}`, {
     headers: {
       Accept: 'application/json',
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
@@ -47,6 +58,9 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function fetchHealth(): Promise<{ status: string }> {
+  if (!isBackendApiConfigured()) {
+    throw new CommuteApiError('FastAPI backend is not configured.', 0, 'Static deployment')
+  }
   return requestJson<{ status: string }>('/api/v1/health')
 }
 
