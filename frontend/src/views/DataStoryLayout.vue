@@ -26,29 +26,29 @@ function onTrafficChange(state: TrafficState) {
 </script>
 
 <template>
-  <div class="doodle-paper min-h-screen text-doodle-text">
-    <a href="#story-main" class="doodle-skip-link">Skip to story content</a>
+  <div class="story-paper min-h-screen text-story-text">
+    <a href="#story-main" class="story-skip-link">Skip to story content</a>
 
     <header
-      class="doodle-sketch-border mx-3 mt-4 -rotate-1 bg-doodle-surface px-6 py-5 md:mx-8 md:mt-8"
+      class="story-sketch-border mx-3 mt-4 -rotate-1 bg-story-surface px-6 py-5 md:mx-8 md:mt-8"
       role="banner"
     >
-      <p class="doodle-kicker mb-1 rotate-2">Sydney commute affordability</p>
-      <h1 class="doodle-display max-w-3xl text-4xl leading-none md:text-5xl">
+      <p class="story-kicker mb-1 rotate-2">Sydney commute affordability</p>
+      <h1 class="story-display max-w-3xl text-[3rem] leading-none">
         The gridlock notebook
       </h1>
-      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-doodle-secondary/80 md:text-base">
+      <p class="story-body mt-3 max-w-2xl text-base leading-relaxed text-story-text/80">
         A hand-sketched data story comparing public transport and private car commutes across
         Greater Sydney.
       </p>
 
       <fieldset class="mt-5">
-        <legend class="doodle-label mb-2">Traffic profile (story-wide)</legend>
+        <legend class="story-label mb-2">Traffic profile (story-wide)</legend>
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="doodle-chip rotate-1"
-            :class="{ 'doodle-chip--active': story.trafficState === 'rush_hour' }"
+            class="story-chip rotate-1"
+            :class="{ 'story-chip--active': story.trafficState === 'rush_hour' }"
             :aria-pressed="story.trafficState === 'rush_hour'"
             @click="onTrafficChange('rush_hour')"
           >
@@ -56,8 +56,8 @@ function onTrafficChange(state: TrafficState) {
           </button>
           <button
             type="button"
-            class="doodle-chip"
-            :class="{ 'doodle-chip--active': story.trafficState === 'off_peak' }"
+            class="story-chip"
+            :class="{ 'story-chip--active': story.trafficState === 'off_peak' }"
             :aria-pressed="story.trafficState === 'off_peak'"
             @click="onTrafficChange('off_peak')"
           >
@@ -69,7 +69,7 @@ function onTrafficChange(state: TrafficState) {
 
     <div
       v-if="loadError"
-      class="doodle-alert mx-3 mt-4 md:mx-8"
+      class="story-alert mx-3 mt-4 md:mx-8"
       role="alert"
       aria-live="assertive"
     >
@@ -87,7 +87,7 @@ function onTrafficChange(state: TrafficState) {
     </main>
 
     <footer
-      class="doodle-sketch-border mx-3 mb-6 bg-[#f5f0e8] px-4 py-3 text-xs text-doodle-secondary/70 md:mx-8"
+      class="story-sketch-border mx-3 mb-6 bg-story-accent-surface px-4 py-3 text-xs text-story-secondary/70 md:mx-8"
       role="contentinfo"
     >
       Pre-calculated aggregates from Supabase · Q2 2026 reporting quarter

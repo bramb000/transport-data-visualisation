@@ -41,7 +41,7 @@ const carouselPanels = computed(() => [
 
 <template>
   <section aria-labelledby="rush-hour-heading">
-    <h2 id="rush-hour-heading" class="doodle-display mb-2 text-3xl -rotate-1">
+    <h2 id="rush-hour-heading" class="story-display mb-2 text-3xl -rotate-1">
       Rush-hour deviation
     </h2>
     <p class="mb-6 max-w-2xl text-sm text-stone-600">
@@ -65,7 +65,7 @@ const carouselPanels = computed(() => [
           v-for="(panel, index) in carouselPanels"
           v-show="mobileSlide === index"
           :key="`${panel.id}-mobile`"
-          class="doodle-carousel-slide"
+          class="story-carousel-slide"
           :title="panel.title"
           :rows="panel.rows"
           :bar-width="barWidth"
@@ -77,8 +77,8 @@ const carouselPanels = computed(() => [
           v-for="(panel, index) in carouselPanels"
           :key="`dot-${panel.id}`"
           type="button"
-          class="doodle-carousel-dot"
-          :class="{ 'doodle-carousel-dot--active': mobileSlide === index }"
+          class="story-carousel-dot"
+          :class="{ 'story-carousel-dot--active': mobileSlide === index }"
           :aria-selected="mobileSlide === index"
           role="tab"
           @click="mobileSlide = index"
@@ -88,27 +88,27 @@ const carouselPanels = computed(() => [
       </div>
     </div>
 
-    <table class="doodle-table mt-8 w-full" aria-labelledby="rush-table-caption">
-      <caption id="rush-table-caption" class="doodle-label mb-2 text-left">
+    <table class="story-table mt-8 w-full" aria-labelledby="rush-table-caption">
+      <caption id="rush-table-caption" class="story-label mb-2 text-left">
         Rush-hour penalty data (accessible fallback)
       </caption>
       <thead>
         <tr>
-          <th scope="col" class="doodle-th">List</th>
-          <th scope="col" class="doodle-th">Suburb</th>
-          <th scope="col" class="doodle-th">Peak penalty (min)</th>
+          <th scope="col" class="story-th">List</th>
+          <th scope="col" class="story-th">Suburb</th>
+          <th scope="col" class="story-th">Peak penalty (min)</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="entry in topLeave" :key="`leave-${entry.sa3Name}`">
-          <th scope="row" class="doodle-td">Leave from</th>
-          <td class="doodle-td">{{ entry.sa3Name }}</td>
-          <td class="doodle-td tabular-nums">{{ entry.penaltyMinutes }}</td>
+          <th scope="row" class="story-td">Leave from</th>
+          <td class="story-td">{{ entry.sa3Name }}</td>
+          <td class="story-td tabular-nums">{{ entry.penaltyMinutes }}</td>
         </tr>
         <tr v-for="entry in topArrive" :key="`arrive-${entry.sa3Name}`">
-          <th scope="row" class="doodle-td">Arrive to</th>
-          <td class="doodle-td">{{ entry.sa3Name }}</td>
-          <td class="doodle-td tabular-nums">{{ entry.penaltyMinutes }}</td>
+          <th scope="row" class="story-td">Arrive to</th>
+          <td class="story-td">{{ entry.sa3Name }}</td>
+          <td class="story-td tabular-nums">{{ entry.penaltyMinutes }}</td>
         </tr>
       </tbody>
     </table>

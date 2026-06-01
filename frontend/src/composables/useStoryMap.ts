@@ -1,6 +1,6 @@
 import type { GeoJSONSource, Map, StyleSpecification } from 'maplibre-gl'
 import { onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
-import { doodleDesign } from '../config/designTokens'
+import { storyDesign } from '../config/designTokens'
 import { loadMapLibre } from '../lib/maplibreLoader'
 import { buildBezierArc } from '../utils/bezierArc'
 import type { Sa3Centroid } from '../utils/sa3Centroids'
@@ -106,7 +106,7 @@ export function useStoryMap(
         source: ARC_SOURCE_ID,
         filter: ['==', ['get', 'role'], 'arc'],
         paint: {
-          'line-color': doodleDesign.colors.secondary,
+          'line-color': storyDesign.colors.secondary,
           'line-width': 3.5,
           'line-dasharray': [1.5, 1.2],
         },
@@ -118,8 +118,8 @@ export function useStoryMap(
         filter: ['==', ['get', 'role'], 'origin'],
         paint: {
           'circle-radius': 7,
-          'circle-color': doodleDesign.colors.primary,
-          'circle-stroke-color': doodleDesign.colors.secondary,
+          'circle-color': storyDesign.colors.primary,
+          'circle-stroke-color': storyDesign.colors.secondary,
           'circle-stroke-width': 2,
         },
       })
@@ -130,8 +130,8 @@ export function useStoryMap(
         filter: ['==', ['get', 'role'], 'destination'],
         paint: {
           'circle-radius': 7,
-          'circle-color': doodleDesign.colors.warning,
-          'circle-stroke-color': doodleDesign.colors.secondary,
+          'circle-color': storyDesign.colors.secondary,
+          'circle-stroke-color': storyDesign.colors.text,
           'circle-stroke-width': 2,
         },
       })

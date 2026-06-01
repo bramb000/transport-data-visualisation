@@ -1,19 +1,37 @@
-/** Design tokens from repo-root ``design.md`` (Doodle system). */
-export const doodleDesign = {
+/** Design tokens from repo-root ``design.md`` (Storytelling system). */
+export const storyDesign = {
   colors: {
-    primary: '#49B6E5',
-    secondary: '#263D5B',
+    primary: '#3B82F6',
+    secondary: '#8B5CF6',
     success: '#16A34A',
     warning: '#D97706',
     danger: '#DC2626',
     surface: '#FFFFFF',
     text: '#111827',
-    paper: '#fcfbf9',
-    postIt: '#fff9b8',
+    neutral: '#FFFFFF',
+    canvas: '#f8fafc',
+    accentSurface: '#eff6ff',
+    secondarySurface: '#f5f3ff',
   },
   fonts: {
-    display: '"Delius Swash Caps", cursive',
+    display: '"Abril Fatface", Georgia, serif',
+    body: '"Inter", system-ui, sans-serif',
     label: '"JetBrains Mono", ui-monospace, monospace',
-    body: '"Delius Swash Caps", cursive',
+  },
+  typography: {
+    h1: '3rem',
+    bodyMd: '1rem',
+    labelCaps: '0.75rem',
+  },
+  rounded: {
+    sm: '4px',
+    md: '8px',
+  },
+  spacing: {
+    sm: '4px',
+    md: '8px',
   },
 } as const
+
+/** @deprecated Use ``storyDesign`` — kept for incremental migration. */
+export const doodleDesign = storyDesign

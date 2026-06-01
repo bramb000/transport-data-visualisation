@@ -1,274 +1,296 @@
 @import "tailwindcss";
 
-/* Tokens from repo-root design.md (Doodle) */
+/* Tokens from repo-root design.md (Storytelling) */
 @theme {
-  --color-doodle-primary: #49b6e5;
-  --color-doodle-secondary: #263d5b;
-  --color-doodle-success: #16a34a;
-  --color-doodle-warning: #d97706;
-  --color-doodle-danger: #dc2626;
-  --color-doodle-surface: #ffffff;
-  --color-doodle-text: #111827;
-  --color-doodle-paper: #fcfbf9;
-  --font-doodle-display: "Delius Swash Caps", cursive;
-  --font-doodle-label: "JetBrains Mono", ui-monospace, monospace;
+  --color-story-primary: #3b82f6;
+  --color-story-secondary: #8b5cf6;
+  --color-story-success: #16a34a;
+  --color-story-warning: #d97706;
+  --color-story-danger: #dc2626;
+  --color-story-surface: #ffffff;
+  --color-story-text: #111827;
+  --color-story-canvas: #f8fafc;
+  --color-story-accent-surface: #eff6ff;
+  --color-story-secondary-surface: #f5f3ff;
+  --font-story-display: "Abril Fatface", Georgia, serif;
+  --font-story-body: "Inter", system-ui, sans-serif;
+  --font-story-label: "JetBrains Mono", ui-monospace, monospace;
+  --radius-story-sm: 4px;
+  --radius-story-md: 8px;
 }
 
 @layer base {
   body {
-    @apply bg-doodle-paper text-doodle-text antialiased;
-    font-family: var(--font-doodle-display);
+    @apply bg-story-canvas text-story-text antialiased;
+    font-family: var(--font-story-body);
+    font-size: 1rem;
   }
 }
 
 @layer components {
-  .doodle-paper {
-    @apply bg-[#fcfbf9];
+  .story-paper {
+    @apply bg-story-canvas;
   }
 
-  .doodle-display {
-    font-family: var(--font-doodle-display);
+  .story-display {
+    font-family: var(--font-story-display);
     font-weight: 400;
-    @apply text-doodle-secondary;
+    @apply text-story-text;
+    line-height: 1.1;
   }
 
-  .doodle-kicker,
-  .doodle-label {
-    font-family: var(--font-doodle-label);
-    @apply text-sm uppercase tracking-wide text-doodle-secondary/80;
+  .story-kicker,
+  .story-label {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply uppercase tracking-widest text-story-secondary;
   }
 
-  .doodle-metric {
-    font-family: var(--font-doodle-display);
-    @apply text-4xl font-normal tabular-nums text-doodle-text md:text-5xl;
+  .story-body {
+    font-family: var(--font-story-body);
+    @apply text-story-text;
   }
 
-  .doodle-sketch-border {
-    border: 2.5px solid var(--color-doodle-secondary);
+  .story-metric {
+    font-family: var(--font-story-display);
+    @apply text-4xl font-normal tabular-nums text-story-text md:text-5xl;
+  }
+
+  .story-sketch-border {
+    border: 2px solid color-mix(in srgb, var(--color-story-secondary) 55%, var(--color-story-text));
     border-radius: 255px 12px 225px 18px / 12px 225px 18px 255px;
   }
 
-  .doodle-post-it {
-    @apply bg-[#fff9b8] px-5 py-5;
-    border: 2px solid #333;
-    border-radius: 4px 18px 6px 22px / 22px 6px 18px 4px;
+  .story-card {
+    @apply bg-story-surface px-5 py-5;
+    border: 2px solid color-mix(in srgb, var(--color-story-primary) 35%, var(--color-story-text));
+    border-radius: var(--radius-story-md) 18px var(--radius-story-sm) 22px / 22px var(--radius-story-sm)
+      18px var(--radius-story-md);
     box-shadow: none;
   }
 
-  .doodle-chip {
-    font-family: var(--font-doodle-label);
-    @apply border-2 border-doodle-secondary bg-doodle-surface px-4 py-2 text-sm text-doodle-text transition-transform duration-200;
-    border-radius: 255px 8px 225px 12px / 8px 225px 12px 255px;
+  .story-chip {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply border-2 border-story-secondary bg-story-surface px-4 py-2 text-story-text transition-transform duration-200;
+    border-radius: var(--radius-story-md) 8px 225px 12px / 8px 225px 12px var(--radius-story-md);
   }
 
-  .doodle-chip:hover {
+  .story-chip:hover {
     @apply -rotate-2;
-    background-color: color-mix(in srgb, var(--color-doodle-primary) 35%, white);
+    background-color: color-mix(in srgb, var(--color-story-primary) 18%, white);
     background-image: linear-gradient(
       105deg,
       transparent 0%,
       transparent 40%,
-      color-mix(in srgb, var(--color-doodle-primary) 50%, transparent) 40%,
-      color-mix(in srgb, var(--color-doodle-primary) 50%, transparent) 58%,
+      color-mix(in srgb, var(--color-story-primary) 35%, transparent) 40%,
+      color-mix(in srgb, var(--color-story-primary) 35%, transparent) 58%,
       transparent 58%
     );
   }
 
-  .doodle-chip--active {
-    @apply -rotate-1 text-doodle-text;
-    background-color: color-mix(in srgb, var(--color-doodle-primary) 45%, white);
-    border-color: var(--color-doodle-secondary);
+  .story-chip--active {
+    @apply -rotate-1 text-story-text;
+    background-color: color-mix(in srgb, var(--color-story-primary) 22%, white);
+    border-color: var(--color-story-primary);
     background-image: linear-gradient(
       100deg,
       transparent 0%,
-      color-mix(in srgb, var(--color-doodle-primary) 55%, transparent) 35%,
-      color-mix(in srgb, var(--color-doodle-primary) 70%, transparent) 65%,
+      color-mix(in srgb, var(--color-story-primary) 40%, transparent) 35%,
+      color-mix(in srgb, var(--color-story-secondary) 25%, transparent) 65%,
       transparent 100%
     );
   }
 
-  .doodle-scribble-hover {
+  .story-scribble-hover {
     @apply cursor-default transition-transform duration-200;
   }
 
-  .doodle-scribble-hover:hover {
+  .story-scribble-hover:hover {
     @apply -rotate-2;
-    background-color: rgba(254, 240, 138, 0.65);
+    background-color: color-mix(in srgb, var(--color-story-primary) 15%, white);
   }
 
-  .doodle-alert {
-    font-family: var(--font-doodle-label);
-    @apply border-2 border-doodle-danger bg-[#ffe4e6] px-4 py-3 text-doodle-danger;
-    border-radius: 12px 255px 18px 225px / 225px 18px 255px 12px;
+  .story-alert {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply border-2 border-story-danger bg-[#ffe4e6] px-4 py-3 text-story-danger;
+    border-radius: var(--radius-story-md) 255px 18px 225px / 225px 18px 255px var(--radius-story-md);
   }
 
-  .doodle-table {
+  .story-table {
     border-collapse: separate;
     border-spacing: 0;
   }
 
-  .doodle-th,
-  .doodle-td {
-    @apply border border-stone-400 px-3 py-2 text-left text-sm;
+  .story-th,
+  .story-td {
+    font-family: var(--font-story-body);
+    @apply border border-stone-300 px-3 py-2 text-left text-sm;
   }
 
-  .doodle-th {
-    font-family: var(--font-doodle-label);
-    @apply bg-[#f5f0e8] font-medium uppercase tracking-wide;
+  .story-th {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply bg-story-accent-surface font-medium uppercase tracking-wide text-story-text;
   }
 
-  .doodle-skip-link {
-    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-[#fffef8] focus:px-4 focus:py-2 focus:text-stone-900;
-    border: 2px solid #333;
-    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  .story-skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-story-surface focus:px-4 focus:py-2 focus:text-story-text;
+    border: 2px solid var(--color-story-primary);
+    border-radius: var(--radius-story-md);
   }
 
-  .doodle-annotation {
-    font-family: var(--font-doodle-display);
+  .story-annotation {
+    font-family: var(--font-story-body);
+    @apply text-story-text;
   }
 
-  .doodle-toggle-track {
-    border: 2.5px solid #2a2a2a;
-    background-color: #f5f0e8;
+  .story-toggle-track {
+    border: 2px solid color-mix(in srgb, var(--color-story-secondary) 40%, var(--color-story-text));
+    background-color: var(--color-story-accent-surface);
     border-radius: 255px 18px 225px 14px / 14px 225px 18px 255px;
   }
 
-  .doodle-toggle-knob {
-    font-family: var(--font-doodle-label);
-    @apply px-5 py-2 text-sm text-doodle-secondary transition-transform duration-200;
+  .story-toggle-knob {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply px-5 py-2 text-story-text transition-transform duration-200;
     border-radius: 255px 12px 225px 10px / 10px 225px 12px 255px;
   }
 
-  .doodle-toggle-knob:hover {
+  .story-toggle-knob:hover {
     @apply -rotate-2;
-    background-color: rgba(254, 240, 138, 0.55);
+    background-color: color-mix(in srgb, var(--color-story-primary) 20%, white);
   }
 
-  .doodle-toggle-knob--on {
-    @apply -rotate-1 text-doodle-text;
-    background-color: color-mix(in srgb, var(--color-doodle-primary) 40%, white);
-    border: 2px solid var(--color-doodle-secondary);
+  .story-toggle-knob--on {
+    @apply -rotate-1 text-story-text;
+    background-color: color-mix(in srgb, var(--color-story-primary) 28%, white);
+    border: 2px solid var(--color-story-primary);
   }
 
-  .doodle-marker-bar {
+  .story-marker-bar {
     background: linear-gradient(
       90deg,
-      var(--color-doodle-warning) 0%,
-      var(--color-doodle-danger) 88%,
-      var(--color-doodle-secondary) 100%
+      var(--color-story-warning) 0%,
+      var(--color-story-danger) 70%,
+      var(--color-story-secondary) 100%
     );
-    border-right: 3px solid var(--color-doodle-secondary);
+    border-right: 3px solid var(--color-story-secondary);
     border-radius: 2px 8px 4px 10px / 10px 4px 8px 2px;
   }
 
-  .doodle-carousel-dot {
-    @apply h-3 w-8 border-2 border-stone-800 bg-[#fffef8] transition-transform duration-200;
+  .story-carousel-dot {
+    @apply h-3 w-8 border-2 border-story-secondary bg-story-surface transition-transform duration-200;
     border-radius: 255px 8px 225px 8px / 8px 225px 8px 255px;
   }
 
-  .doodle-carousel-dot--active {
-    @apply -rotate-2;
-    background-color: color-mix(in srgb, var(--color-doodle-primary) 50%, white);
+  .story-carousel-dot--active {
+    @apply -rotate-2 border-story-primary;
+    background-color: color-mix(in srgb, var(--color-story-primary) 35%, white);
   }
 
-  .doodle-map-shell {
-    @apply border-[3px] border-doodle-secondary bg-[#ebe6dc];
+  .story-map-shell {
+    @apply border-[3px] border-story-secondary bg-story-canvas;
     border-radius: 6px 22px 8px 18px / 18px 8px 22px 6px;
   }
 
-  .doodle-map-canvas {
-    filter: grayscale(0.82) sepia(0.12) contrast(0.95);
+  .story-map-canvas {
+    filter: grayscale(0.75) sepia(0.08) contrast(0.96);
   }
 
-  .doodle-polaroid {
-    @apply absolute z-20 max-w-[min(100%,220px)] border-2 border-stone-800 bg-[#fffef8] p-3;
+  .story-polaroid {
+    @apply absolute z-20 max-w-[min(100%,220px)] border-2 border-story-primary bg-story-surface p-3;
     border-radius: 4px 14px 6px 16px / 16px 6px 14px 4px;
   }
 
-  .doodle-polaroid--origin {
+  .story-polaroid--origin {
     @apply left-3 top-3;
   }
 
-  .doodle-polaroid--dest {
+  .story-polaroid--dest {
     @apply right-3 top-3;
   }
 
-  .doodle-select {
-    font-family: var(--font-doodle-label);
-    @apply border-2 border-doodle-secondary bg-doodle-surface px-2 py-1.5 text-sm text-doodle-text;
+  .story-select {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply border-2 border-story-secondary bg-story-surface px-2 py-1.5 text-story-text;
     border-radius: 255px 10px 225px 12px / 12px 225px 10px 255px;
   }
 
-  .doodle-select:focus {
-    @apply outline-none;
-    background-color: #fef9c3;
+  .story-select:focus {
+    @apply outline-none ring-2 ring-story-primary/40;
+    background-color: var(--color-story-accent-surface);
   }
 
-  .doodle-notebook-tab {
-    font-family: var(--font-doodle-label);
-    @apply absolute bottom-3 left-1/2 z-30 -translate-x-1/2 border-2 border-doodle-secondary bg-[#fff9b8] px-4 py-2 text-sm transition-transform duration-200;
+  .story-notebook-tab {
+    font-family: var(--font-story-label);
+    font-size: 0.75rem;
+    @apply absolute bottom-3 left-1/2 z-30 -translate-x-1/2 border-2 border-story-secondary bg-story-secondary-surface px-4 py-2 transition-transform duration-200;
     border-radius: 255px 12px 225px 14px / 14px 225px 12px 255px;
   }
 
-  .doodle-notebook-tab:hover {
+  .story-notebook-tab:hover {
     @apply -rotate-2;
   }
 
-  .doodle-notebook {
+  .story-notebook {
     @apply pointer-events-none absolute right-0 top-0 z-20 h-full w-full max-w-md translate-x-full opacity-0 transition-all duration-300 ease-out;
   }
 
-  .doodle-notebook--open {
+  .story-notebook--open {
     @apply pointer-events-auto translate-x-0 opacity-100;
   }
 
-  .doodle-notebook-inner {
-    @apply m-3 h-[calc(100%-1.5rem)] overflow-y-auto border-[2.5px] border-stone-800 bg-[#fffef8] p-4;
+  .story-notebook-inner {
+    @apply m-3 h-[calc(100%-1.5rem)] overflow-y-auto border-[2.5px] border-story-secondary bg-story-surface p-4;
     border-radius: 8px 4px 18px 6px / 6px 18px 4px 8px;
   }
 
   @media (max-width: 767px) {
-    .doodle-notebook {
+    .story-notebook {
       @apply right-0 top-auto bottom-0 h-auto max-h-[62vh] max-w-none translate-x-0 translate-y-full;
     }
 
-    .doodle-notebook--open {
+    .story-notebook--open {
       @apply translate-y-0;
     }
 
-    .doodle-polaroid--origin {
+    .story-polaroid--origin {
       @apply relative left-auto top-auto mb-2 w-full max-w-none;
     }
 
-    .doodle-polaroid--dest {
+    .story-polaroid--dest {
       @apply relative right-auto top-auto mb-3 w-full max-w-none;
     }
   }
 
   @media (min-width: 768px) {
-    .doodle-map-shell {
+    .story-map-shell {
       @apply pr-[min(26rem,42%)];
     }
 
-    .doodle-notebook--open {
+    .story-notebook--open {
       @apply translate-x-0;
     }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .doodle-chip,
-  .doodle-scribble-hover,
-  .doodle-toggle-knob,
-  .doodle-notebook,
-  .doodle-notebook-tab {
+  .story-chip,
+  .story-scribble-hover,
+  .story-toggle-knob,
+  .story-notebook,
+  .story-notebook-tab {
     transition: none;
   }
 
-  .doodle-chip:hover,
-  .doodle-scribble-hover:hover,
-  .doodle-toggle-knob:hover,
-  .doodle-notebook-tab:hover {
+  .story-chip:hover,
+  .story-scribble-hover:hover,
+  .story-toggle-knob:hover,
+  .story-notebook-tab:hover {
     transform: none;
   }
 }

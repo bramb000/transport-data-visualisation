@@ -10,14 +10,14 @@ defineProps<{
 </script>
 
 <template>
-  <div class="doodle-sketch-border bg-[#fffef8] p-4 rotate-[0.4deg]">
-    <h3 class="doodle-label mb-4 normal-case">{{ title }}</h3>
+  <div class="story-sketch-border bg-story-surface p-4 rotate-[0.4deg]">
+    <h3 class="story-label mb-4 normal-case">{{ title }}</h3>
     <ol class="space-y-4">
       <li v-for="(entry, index) in rows" :key="entry.sa3Name" class="list-none">
-        <p class="doodle-annotation text-sm text-stone-800">{{ entry.annotation }}</p>
-        <div class="mt-2 h-4 w-full border border-dashed border-stone-400 bg-[#f5f0e8]">
+        <p class="story-annotation text-sm text-story-text">{{ entry.annotation }}</p>
+        <div class="mt-2 h-4 w-full border border-dashed border-stone-400 bg-story-accent-surface">
           <div
-            class="doodle-marker-bar h-full"
+            class="story-marker-bar h-full"
             :class="barRotation(index)"
             :style="{ width: barWidth(entry) }"
             role="presentation"

@@ -1,8 +1,8 @@
 ---
-name: Doodle
+name: Storytelling
 colors:
-  primary: "#49B6E5"
-  secondary: "#263D5B"
+  primary: "#3B82F6"
+  secondary: "#8B5CF6"
   success: "#16A34A"
   warning: "#D97706"
   danger: "#DC2626"
@@ -11,15 +11,15 @@ colors:
   neutral: "#FFFFFF"
 typography:
   h1:
-    fontFamily: "Delius Swash Caps"
-    fontSize: 2.5rem
+    fontFamily: "Abril Fatface"
+    fontSize: 3rem
   body-md:
-    fontFamily: "Delius Swash Caps"
+    fontFamily: "Inter"
     fontSize: 1rem
   label-caps:
     fontFamily: "JetBrains Mono"
-    fontSize: 0.875rem
-  sourceScale: "14/16/18/24/32/40"
+    fontSize: 0.75rem
+  sourceScale: "desktop-first expressive scale"
   weights: "100, 200, 300, 400, 500, 600, 700, 800, 900"
 rounded:
   sm: 4px
@@ -32,21 +32,21 @@ spacing:
 
 ## Overview
 
-Hand-drawn, sketch-like style with doodles, handwritten fonts, and imperfect lines for a playful, informal feel.
+Narrative-driven design using visuals, copy, and interaction to guide users through engaging, emotionally resonant journeys.
 
 ## Style Foundations
 
 - **Visual style:** playful
-- **Typography scale:** 14/16/18/24/32/40
-- **Typography fonts:** primary=Delius Swash Caps, display=Delius Swash Caps, mono=JetBrains Mono
+- **Typography scale:** desktop-first expressive scale
+- **Typography fonts:** primary=Inter, display=Abril Fatface, mono=JetBrains Mono
 - **Typography weights:** 100, 200, 300, 400, 500, 600, 700, 800, 900
-- **Color palette:** primary, secondary, neutral, success, warning, danger
+- **Color palette:** primary, neutral, success, warning, danger
 - **Spacing scale:** 4/8/12/16/24/32
 
 ## Colors
 
-- **Primary (#49B6E5):** Token from style foundations.
-- **Secondary (#263D5B):** Token from style foundations.
+- **Primary (#3B82F6):** Token from style foundations.
+- **Secondary (#8B5CF6):** Token from style foundations.
 - **Success (#16A34A):** Token from style foundations.
 - **Warning (#D97706):** Token from style foundations.
 - **Danger (#DC2626):** Token from style foundations.
