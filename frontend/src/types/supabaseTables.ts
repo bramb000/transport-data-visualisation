@@ -11,6 +11,7 @@ export type CommuteMode =
 export interface HistoricalCommuteSnapshotRow {
   id: string
   reporting_quarter: string
+  snapshot_month: string
   origin_sa3: string
   destination_sa3: string
   route_name: string

@@ -28,7 +28,8 @@ import type {
   ReportSummaryCacheRow,
 } from '../types/supabaseTables'
 import { HTS_MODE_PUBLIC_TRANSPORT, HTS_MODE_VEHICLE_DRIVER } from '../types/supabaseTables'
-import { buildMonthlyHistoricalTrends } from '../utils/historicalTrends'
+import { buildCommuteTimeInsight } from '../utils/commuteTimeInsight'
+import { buildMonthlyHistoricalTrends, countTrendMonths } from '../utils/historicalTrends'
 import { offPeakDrivingMinutes, rushPenaltyMinutes } from '../utils/trafficProfile'
 import { weeklyToDailyCost } from '../utils/tollCap'
 
@@ -215,6 +216,12 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
     ),
   )
 
+  const trendMonthCount = computed(() =>
+    countTrendMonths(rawHistoricalRows.value, trendDistanceKm.value),
+  )
+
+  const commuteTimeInsight = computed(() => buildCommuteTimeInsight(historicalTrends.value))
+
   async function fetchCoreData(): Promise<void> {
     const generation = ++loadGeneration
     isLoading.value = true
@@ -302,6 +309,8 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
     aggregationMode,
     trendDistanceKm,
     historicalTrends,
+    trendMonthCount,
+    commuteTimeInsight,
     suburbDeviations,
     metroCorridors,
     routeSelection,

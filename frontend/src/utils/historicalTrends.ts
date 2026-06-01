@@ -3,11 +3,17 @@ import type { HistoricalCommuteSnapshotRow } from '../types/supabaseTables'
 import { CITY_WIDE_ORIGIN_SA3 } from '../types/commuteData'
 import { weeklyToDailyCost } from './tollCap'
 
-const REPORTING_QUARTER_PATTERN = /^Q([1-4])\s+(\d{4})$/
-
 function mean(values: number[]): number | null {
   if (!values.length) return null
   return Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10
+}
+
+/** Resolve calendar month key ``YYYY-MM`` for a snapshot row. */
+export function snapshotMonthKey(row: HistoricalCommuteSnapshotRow): string {
+  if (row.snapshot_month?.trim()) return row.snapshot_month.trim()
+  const fromFetch = monthKeyFromIso(row.fetched_at)
+  if (fromFetch) return fromFetch
+  return row.reporting_quarter
 }
 
 /** Parse ISO timestamp to ``YYYY-MM`` (UTC). */
@@ -18,20 +24,6 @@ export function monthKeyFromIso(iso: string | null | undefined): string | null {
   const year = date.getUTCFullYear()
   const month = date.getUTCMonth() + 1
   return `${year}-${String(month).padStart(2, '0')}`
-}
-
-/** First calendar month of a reporting quarter label (``Q2 2024`` → ``2024-04``). */
-export function monthKeyFromReportingQuarter(reportingQuarter: string): string | null {
-  const match = REPORTING_QUARTER_PATTERN.exec(reportingQuarter.trim())
-  if (!match) return null
-  const quarter = Number(match[1])
-  const year = Number(match[2])
-  const month = (quarter - 1) * 3 + 1
-  return `${year}-${String(month).padStart(2, '0')}`
-}
-
-export function monthKeyFromSnapshot(row: HistoricalCommuteSnapshotRow): string {
-  return monthKeyFromIso(row.fetched_at) ?? monthKeyFromReportingQuarter(row.reporting_quarter) ?? row.reporting_quarter
 }
 
 export function formatMonthLabel(monthKey: string): string {
@@ -58,8 +50,7 @@ export function matchesTrendDistance(
 }
 
 /**
- * Monthly average commute time and cost from snapshot rows.
- * Buckets by ``fetched_at`` month when present, else the quarter's start month.
+ * One point per calendar month from ``snapshot_month`` (true monthly grain).
  */
 export function buildMonthlyHistoricalTrends(
   rows: HistoricalCommuteSnapshotRow[],
@@ -72,7 +63,7 @@ export function buildMonthlyHistoricalTrends(
     if (row.origin_sa3 === CITY_WIDE_ORIGIN_SA3) continue
     if (!matchesTrendDistance(row.distance_km, maxDistanceKm)) continue
 
-    const monthKey = monthKeyFromSnapshot(row)
+    const monthKey = snapshotMonthKey(row)
     const bucket = byMonth.get(monthKey) ?? []
     bucket.push(row)
     byMonth.set(monthKey, bucket)
@@ -93,4 +84,17 @@ export function buildMonthlyHistoricalTrends(
         averageCostAud: mean(costs),
       }
     })
+}
+
+export function countTrendMonths(
+  rows: HistoricalCommuteSnapshotRow[],
+  maxDistanceKm: number,
+): number {
+  const months = new Set<string>()
+  for (const row of rows) {
+    if (row.origin_sa3 === CITY_WIDE_ORIGIN_SA3) continue
+    if (!matchesTrendDistance(row.distance_km, maxDistanceKm)) continue
+    months.add(snapshotMonthKey(row))
+  }
+  return months.size
 }

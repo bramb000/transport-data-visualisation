@@ -35,10 +35,12 @@ def test_transform_commute_data_pt_and_car() -> None:
         "Canterbury",
         "Sydney Inner City",
         "Q1 2024",
+        "2024-01",
         data,
     )
     assert len(rows) == 2
     assert rows[0]["reporting_quarter"] == "Q1 2024"
+    assert rows[0]["snapshot_month"] == "2024-01"
     assert rows[0]["mode"] == HTS_MODE_PUBLIC_TRANSPORT
     assert rows[0]["origin_sa3"] == "Canterbury"
     assert rows[0]["destination_sa3"] == "Sydney Inner City"
@@ -66,6 +68,7 @@ def test_transform_skips_failed_modes() -> None:
         "Canterbury",
         "Strathfield - Burwood - Ashfield",
         "Q4 2023",
+        "2023-10",
         data,
     )
     assert len(rows) == 1

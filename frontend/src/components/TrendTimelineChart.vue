@@ -11,7 +11,11 @@ const props = defineProps<{
 }>()
 
 const store = useCommuteDataStore()
-const { historicalTrends, isLoading, trendDistanceKm } = storeToRefs(store)
+const { historicalTrends, isLoading, trendDistanceKm, trendMonthCount } = storeToRefs(store)
+
+const needsBackfill = computed(
+  () => !isLoading.value && trendMonthCount.value > 0 && trendMonthCount.value < 2,
+)
 
 const chartHost = ref<HTMLElement | null>(null)
 
@@ -109,7 +113,11 @@ useEchartsHost(chartHost, buildOption, [
     <div class="st-trend-layout__chart">
       <p v-if="isLoading" class="st-loading">Loading trend data…</p>
       <p v-else-if="!historicalTrends.length" class="st-loading">
-        No monthly snapshots for ≤ {{ trendDistanceKm }} km.
+        No snapshots for corridors ≤ {{ trendDistanceKm }} km. Widen the distance filter or run ETL.
+      </p>
+      <p v-else-if="needsBackfill" class="st-trend-backfill-hint">
+        Only {{ trendMonthCount }} month of snapshots loaded. Run monthly ETL backfill to chart the
+        full history.
       </p>
       <div
         ref="chartHost"

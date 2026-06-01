@@ -150,6 +150,12 @@
     @apply relative min-h-0 min-w-0 flex-1;
   }
 
+  .st-trend-backfill-hint {
+    font-family: var(--font-st-mono);
+    font-size: 0.65rem;
+    @apply pointer-events-none absolute left-6 right-6 top-14 z-10 max-w-xl text-left uppercase leading-relaxed tracking-wide text-st-ink-muted;
+  }
+
   .st-trend-layout__radial {
     @apply z-10 flex w-full shrink-0 md:w-44;
   }

@@ -25,6 +25,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
+from etl.month_utils import current_snapshot_month, month_to_reporting_quarter
 from etl.run_pipeline import load_od_pairs
 from services.cost_engine import build_snapshot_row
 from services.report_aggregator import build_report_summary_rows
@@ -160,9 +161,11 @@ def build_aggregate_origin_rows(
             timezone.utc
         ).isoformat()
 
+        snapshot_month = str(bucket[0].get("snapshot_month") or "").strip()
         aggregate_rows.append(
             build_snapshot_row(
                 reporting_quarter=quarter,
+                snapshot_month=snapshot_month,
                 origin_sa3=aggregate_origin_sa3,
                 destination_sa3=destination,
                 route_name=f"aggregate:{aggregate_origin_sa3} → {destination}",
@@ -188,6 +191,7 @@ def transform_commute_data(
     origin_sa3: str,
     destination_sa3: str,
     reporting_quarter: str,
+    snapshot_month: str,
     data: Dict[str, Any],
 ) -> List[Dict[str, Any]]:
     """Map travel_engine output to ``historical_commute_snapshots`` insert rows."""
@@ -203,6 +207,7 @@ def transform_commute_data(
             rows.append(
                 build_snapshot_row(
                     reporting_quarter=reporting_quarter,
+                    snapshot_month=snapshot_month,
                     origin_sa3=origin_sa3,
                     destination_sa3=destination_sa3,
                     route_name=route_name,
@@ -224,6 +229,7 @@ def transform_commute_data(
             rows.append(
                 build_snapshot_row(
                     reporting_quarter=reporting_quarter,
+                    snapshot_month=snapshot_month,
                     origin_sa3=origin_sa3,
                     destination_sa3=destination_sa3,
                     route_name=route_name,
@@ -247,6 +253,7 @@ def transform_commute_data(
 async def fetch_all_pairs(
     pairs: List[Dict[str, Any]],
     reporting_quarter: str,
+    snapshot_month: str,
 ) -> List[Dict[str, Any]]:
     """Fetch TfNSW + ORS data for every OD pair and return insert-ready rows."""
     all_rows: List[Dict[str, Any]] = []
@@ -292,6 +299,7 @@ async def fetch_all_pairs(
             origin_sa3,
             destination_sa3,
             reporting_quarter,
+            snapshot_month,
             data,
         )
         if not rows:
@@ -325,7 +333,7 @@ def bulk_insert_snapshots(supabase: Client, rows: List[Dict[str, Any]]) -> int:
         batch = rows[start : start + INSERT_BATCH_SIZE]
         response = (
             supabase.table("historical_commute_snapshots")
-            .upsert(batch, on_conflict="reporting_quarter,origin_sa3,destination_sa3,mode")
+            .upsert(batch, on_conflict="snapshot_month,origin_sa3,destination_sa3,mode")
             .execute()
         )
         inserted += len(response.data or [])
@@ -376,14 +384,16 @@ def bulk_insert_report_summaries(
 async def run_etl(
     config_path: Path = OD_PAIRS_PATH,
     reporting_quarter: Optional[str] = None,
+    snapshot_month: Optional[str] = None,
 ) -> int:
-    quarter = resolve_reporting_quarter(reporting_quarter)
+    month = (snapshot_month or current_snapshot_month()).strip()
+    quarter = reporting_quarter.strip() if reporting_quarter else month_to_reporting_quarter(month)
     pairs = load_od_pairs(config_path)
     if not pairs:
         logger.warning("No OD pairs in %s", config_path)
         return 0
 
-    rows = await fetch_all_pairs(pairs, quarter)
+    rows = await fetch_all_pairs(pairs, quarter, month)
     if not rows:
         logger.error("ETL produced no rows — aborting insert.")
         return 1
@@ -400,7 +410,7 @@ async def run_etl(
     supabase = create_supabase_client()
     bulk_insert_snapshots(supabase, rows)
     bulk_insert_report_summaries(supabase, rows)
-    logger.info("ETL complete for reporting quarter %s", quarter)
+    logger.info("ETL complete for snapshot month %s (%s)", month, quarter)
     return 0
 
 
@@ -409,14 +419,24 @@ def main() -> None:
     parser.add_argument(
         "--reporting-quarter",
         dest="reporting_quarter",
-        help=f'Reporting quarter label (default: env REPORTING_QUARTER or {DEFAULT_REPORTING_QUARTER})',
+        help=f'Reporting quarter label (default: derived from --snapshot-month or {DEFAULT_REPORTING_QUARTER})',
+    )
+    parser.add_argument(
+        "--snapshot-month",
+        dest="snapshot_month",
+        help='Calendar month for this snapshot (YYYY-MM). Default: current UTC month.',
     )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     _load_dotenv()
-    exit_code = asyncio.run(run_etl(reporting_quarter=args.reporting_quarter))
+    exit_code = asyncio.run(
+        run_etl(
+            reporting_quarter=args.reporting_quarter,
+            snapshot_month=args.snapshot_month,
+        )
+    )
     sys.exit(exit_code)
 
 

@@ -217,6 +217,7 @@ def calculate_pt_trip_cost(
 def build_snapshot_row(
     *,
     reporting_quarter: str,
+    snapshot_month: str,
     origin_sa3: str,
     destination_sa3: str,
     route_name: str,
@@ -235,6 +236,7 @@ def build_snapshot_row(
     """Shape a row for ``historical_commute_snapshots`` inserts."""
     row: Dict[str, Any] = {
         "reporting_quarter": reporting_quarter,
+        "snapshot_month": snapshot_month,
         "origin_sa3": origin_sa3,
         "destination_sa3": destination_sa3,
         "route_name": route_name,
