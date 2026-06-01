@@ -8,13 +8,18 @@ export const DEFAULT_REPORTING_QUARTER = 'Q2 2026'
 
 export const SCROLL_STEP_COUNT = 4
 
+/** Maximum corridor distance (km) included in the trend timeline. */
+export const TREND_DISTANCE_OPTIONS_KM = [10, 20, 30, 50] as const
+export type TrendDistanceFilterKm = (typeof TREND_DISTANCE_OPTIONS_KM)[number]
+
 export interface MacroAverages {
   averageTimeMinutes: number | null
   averageCostAud: number | null
 }
 
 export interface HistoricalTrendPoint {
-  reporting_quarter: string
+  monthKey: string
+  monthLabel: string
   averageTimeMinutes: number | null
   averageCostAud: number | null
 }

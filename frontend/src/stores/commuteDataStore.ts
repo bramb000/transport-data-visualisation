@@ -8,11 +8,11 @@ import {
 import { SupabaseClientError } from '../api/supabaseClient'
 import type {
   AggregationMode,
-  HistoricalTrendPoint,
   MacroAverages,
   RouteMetrics,
   RouteSelection,
   SuburbDeviation,
+  TrendDistanceFilterKm,
 } from '../types/commuteData'
 import {
   CITY_WIDE_ORIGIN_SA3,
@@ -28,11 +28,18 @@ import type {
   ReportSummaryCacheRow,
 } from '../types/supabaseTables'
 import { HTS_MODE_PUBLIC_TRANSPORT, HTS_MODE_VEHICLE_DRIVER } from '../types/supabaseTables'
+import { buildMonthlyHistoricalTrends } from '../utils/historicalTrends'
 import { offPeakDrivingMinutes, rushPenaltyMinutes } from '../utils/trafficProfile'
-import { reportingQuarterSortKey } from '../utils/quarterFormat'
 import { weeklyToDailyCost } from '../utils/tollCap'
 
-export type { AggregationMode, HistoricalTrendPoint, MacroAverages, SuburbDeviation, RouteMetrics }
+export type {
+  AggregationMode,
+  HistoricalTrendPoint,
+  MacroAverages,
+  SuburbDeviation,
+  RouteMetrics,
+  TrendDistanceFilterKm,
+} from '../types/commuteData'
 
 function isCorridorPayload(payload: unknown): payload is CorridorSummaryPayload {
   if (!payload || typeof payload !== 'object') return false
@@ -72,35 +79,6 @@ function buildMacroFromCorridor(
     averageTimeMinutes: mean(timeSamples),
     averageCostAud: mean(costSamples),
   }
-}
-
-function buildHistoricalTrends(
-  rows: HistoricalCommuteSnapshotRow[],
-  mode: AggregationMode,
-): HistoricalTrendPoint[] {
-  const byQuarter = new Map<string, HistoricalCommuteSnapshotRow[]>()
-
-  for (const row of rows) {
-    if (row.origin_sa3 === CITY_WIDE_ORIGIN_SA3) continue
-    const bucket = byQuarter.get(row.reporting_quarter) ?? []
-    bucket.push(row)
-    byQuarter.set(row.reporting_quarter, bucket)
-  }
-
-  return [...byQuarter.entries()]
-    .sort(([left], [right]) => reportingQuarterSortKey(left) - reportingQuarterSortKey(right))
-    .map(([reporting_quarter, quarterRows]) => {
-      const times = quarterRows.map((row) => row.time_minutes)
-      const costs = quarterRows.map((row) =>
-        mode === 'weekly' ? row.weekly_cost_aud : weeklyToDailyCost(row.weekly_cost_aud),
-      )
-
-      return {
-        reporting_quarter,
-        averageTimeMinutes: mean(times),
-        averageCostAud: mean(costs),
-      }
-    })
 }
 
 function buildSuburbDeviations(corridors: CorridorSummaryPayload[]): SuburbDeviation[] {
@@ -195,7 +173,7 @@ function buildRouteMetrics(
 
 export const useCommuteDataStore = defineStore('commuteData', () => {
   const aggregationMode = ref<AggregationMode>('weekly')
-  const historicalTrends = ref<HistoricalTrendPoint[]>([])
+  const trendDistanceKm = ref<TrendDistanceFilterKm>(50)
   const suburbDeviations = ref<SuburbDeviation[]>([])
   const metroCorridors = ref<CorridorSummaryPayload[]>([])
   const rawHistoricalRows = ref<HistoricalCommuteSnapshotRow[]>([])
@@ -229,6 +207,14 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
     suburbDeviations.value.filter((row) => row.listType === 'arrive').slice(0, 8),
   )
 
+  const historicalTrends = computed(() =>
+    buildMonthlyHistoricalTrends(
+      rawHistoricalRows.value,
+      aggregationMode.value,
+      trendDistanceKm.value,
+    ),
+  )
+
   async function fetchCoreData(): Promise<void> {
     const generation = ++loadGeneration
     isLoading.value = true
@@ -243,7 +229,6 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
       if (generation !== loadGeneration) return
 
       rawHistoricalRows.value = snapshots
-      historicalTrends.value = buildHistoricalTrends(snapshots, aggregationMode.value)
       metroCorridors.value = corridorRows
         .map((row) => row.payload)
         .filter(isCorridorPayload)
@@ -252,7 +237,7 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
       await fetchRouteMetrics()
     } catch (error) {
       if (generation !== loadGeneration) return
-      historicalTrends.value = []
+      rawHistoricalRows.value = []
       suburbDeviations.value = []
       metroCorridors.value = []
       routeMetrics.value = null
@@ -284,6 +269,10 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
     aggregationMode.value = mode
   }
 
+  function setTrendDistanceKm(km: TrendDistanceFilterKm) {
+    trendDistanceKm.value = km
+  }
+
   function setActiveStep(step: number) {
     const clamped = Math.max(0, Math.min(step, SCROLL_STEP_COUNT - 1))
     if (activeStep.value === clamped) return
@@ -300,10 +289,6 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
   }
 
   watch(aggregationMode, () => {
-    historicalTrends.value = buildHistoricalTrends(
-      rawHistoricalRows.value,
-      aggregationMode.value,
-    )
     void fetchRouteMetrics()
   })
 
@@ -315,6 +300,7 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
 
   return {
     aggregationMode,
+    trendDistanceKm,
     historicalTrends,
     suburbDeviations,
     metroCorridors,
@@ -330,6 +316,7 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
     fetchCoreData,
     fetchRouteMetrics,
     setAggregationMode,
+    setTrendDistanceKm,
     setActiveStep,
     setStepScrollProgress,
     setRouteSelection,

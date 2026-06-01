@@ -13,7 +13,9 @@ const { activeStep, stepScrollProgress, loadError } = storeToRefs(store)
 
 const { setStepRef, copy } = useScrollySteps()
 
-const stageInteractive = computed(() => activeStep.value === 0 || activeStep.value === 3)
+const stageInteractive = computed(
+  () => activeStep.value === 0 || activeStep.value === 1 || activeStep.value === 3,
+)
 </script>
 
 <template>

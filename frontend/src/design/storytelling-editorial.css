@@ -142,6 +142,92 @@
     @apply h-full w-full;
   }
 
+  .st-trend-layout {
+    @apply pointer-events-auto relative flex h-full w-full flex-col items-stretch md:flex-row;
+  }
+
+  .st-trend-layout__chart {
+    @apply relative min-h-0 min-w-0 flex-1;
+  }
+
+  .st-trend-layout__radial {
+    @apply z-10 flex w-full shrink-0 md:w-44;
+  }
+
+  .st-trend-radial__compact {
+    @apply flex w-full flex-wrap justify-center gap-2 py-3 md:hidden;
+  }
+
+  .st-trend-radial__compact-btn {
+    font-family: var(--font-st-mono);
+    font-size: 0.7rem;
+    @apply rounded-full border border-st-ink/25 px-3 py-1.5 uppercase tracking-wider text-st-ink-muted transition-colors;
+  }
+
+  .st-trend-radial__compact-btn--active {
+    @apply border-st-primary bg-st-primary text-st-canvas;
+  }
+
+  .st-trend-radial__arc {
+    @apply relative mt-3 hidden h-44 w-full max-w-[11rem] md:block;
+  }
+
+  .st-trend-radial {
+    @apply flex h-full flex-col items-center justify-center px-2 py-8 text-st-ink;
+  }
+
+  .st-trend-radial__legend {
+    font-family: var(--font-st-mono);
+    font-size: 0.65rem;
+    @apply mb-1 uppercase tracking-[0.2em] text-st-ink-muted;
+  }
+
+  .st-trend-radial__hint {
+    font-family: var(--font-st-mono);
+    font-size: 0.6rem;
+    @apply uppercase tracking-wider text-st-ink-muted;
+  }
+
+  .st-trend-radial__arc {
+    color: color-mix(in srgb, var(--color-st-ink) 35%, transparent);
+  }
+
+  .st-trend-radial__guide {
+    @apply absolute inset-0 h-full w-full;
+  }
+
+  .st-trend-radial__node {
+    --st-radial-radius: 4.25rem;
+    font-family: var(--font-st-mono);
+    @apply absolute left-1/2 top-1/2 flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-st-ink/20 bg-st-canvas-muted/80 text-st-ink-muted transition-colors duration-200;
+    transform: translate(-50%, -50%) rotate(var(--st-radial-angle))
+      translateY(calc(-1 * var(--st-radial-radius))) rotate(calc(-1 * var(--st-radial-angle)));
+  }
+
+  .st-trend-radial__node:hover {
+    @apply border-st-primary/60 text-st-ink;
+  }
+
+  .st-trend-radial__node--active {
+    @apply border-st-primary bg-st-primary text-st-canvas;
+  }
+
+  .st-trend-radial__value {
+    font-size: 0.85rem;
+    @apply font-semibold leading-none;
+  }
+
+  .st-trend-radial__unit {
+    font-size: 0.55rem;
+    @apply uppercase tracking-wider opacity-80;
+  }
+
+  .st-trend-radial__active {
+    font-family: var(--font-st-mono);
+    font-size: 0.6rem;
+    @apply mt-4 max-w-[8rem] text-center uppercase tracking-wide text-st-ink-muted;
+  }
+
   .st-panel {
     @apply pointer-events-auto absolute bottom-0 right-0 z-20 w-full max-w-md p-4 md:p-6;
     background: color-mix(in srgb, var(--color-st-canvas) 92%, transparent);

@@ -68,7 +68,7 @@ export async function fetchReportSummaryRows(
 export async function fetchAllHistoricalSnapshots(): Promise<HistoricalCommuteSnapshotRow[]> {
   return fetchSupabaseRows<HistoricalCommuteSnapshotRow>('historical_commute_snapshots', {
     select: '*',
-    order: 'reporting_quarter.asc',
+    order: 'fetched_at.asc,reporting_quarter.asc',
   })
 }
 
