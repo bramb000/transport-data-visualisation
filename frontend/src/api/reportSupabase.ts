@@ -74,3 +74,29 @@ export async function fetchHistoricalSnapshotRows(
     order: 'reporting_quarter.asc',
   })
 }
+
+/** All cached summary rows for a quarter and origin–destination corridor. */
+export async function fetchCorridorSummaryRows(
+  reportingQuarter: string,
+  originSa3: string,
+  destinationSa3: string,
+): Promise<ReportSummaryCacheRow[]> {
+  return fetchSupabaseRows<ReportSummaryCacheRow>('report_summaries_cache', {
+    select: '*',
+    reporting_quarter: `eq.${reportingQuarter}`,
+    origin_sa3: `eq.${originSa3}`,
+    destination_sa3: `eq.${destinationSa3}`,
+  })
+}
+
+/** Every ``corridor_summary`` payload for a reporting quarter (leaderboard / metro rollups). */
+export async function fetchMetroCorridorSummaries(
+  reportingQuarter: string,
+): Promise<ReportSummaryCacheRow[]> {
+  return fetchSupabaseRows<ReportSummaryCacheRow>('report_summaries_cache', {
+    select: '*',
+    reporting_quarter: `eq.${reportingQuarter}`,
+    summary_key: 'eq.corridor_summary',
+    order: 'origin_sa3.asc',
+  })
+}

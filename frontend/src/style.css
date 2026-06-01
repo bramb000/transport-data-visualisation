@@ -1,42 +1,274 @@
 @import "tailwindcss";
 
+/* Tokens from repo-root design.md (Doodle) */
+@theme {
+  --color-doodle-primary: #49b6e5;
+  --color-doodle-secondary: #263d5b;
+  --color-doodle-success: #16a34a;
+  --color-doodle-warning: #d97706;
+  --color-doodle-danger: #dc2626;
+  --color-doodle-surface: #ffffff;
+  --color-doodle-text: #111827;
+  --color-doodle-paper: #fcfbf9;
+  --font-doodle-display: "Delius Swash Caps", cursive;
+  --font-doodle-label: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-doodle-paper text-doodle-text antialiased;
+    font-family: var(--font-doodle-display);
+  }
+}
+
 @layer components {
-  .text-report-kicker {
-    @apply text-xs font-semibold uppercase tracking-[0.2em] text-slate-500;
+  .doodle-paper {
+    @apply bg-[#fcfbf9];
   }
 
-  .text-report-title {
-    @apply font-serif text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-4xl;
+  .doodle-display {
+    font-family: var(--font-doodle-display);
+    font-weight: 400;
+    @apply text-doodle-secondary;
   }
 
-  .text-report-subtitle {
-    @apply text-sm leading-relaxed text-slate-600 md:text-base;
+  .doodle-kicker,
+  .doodle-label {
+    font-family: var(--font-doodle-label);
+    @apply text-sm uppercase tracking-wide text-doodle-secondary/80;
   }
 
-  .text-report-section-heading {
-    @apply text-lg font-semibold tracking-tight text-slate-900 md:text-xl;
+  .doodle-metric {
+    font-family: var(--font-doodle-display);
+    @apply text-4xl font-normal tabular-nums text-doodle-text md:text-5xl;
   }
 
-  .text-report-card-label {
-    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+  .doodle-sketch-border {
+    border: 2.5px solid var(--color-doodle-secondary);
+    border-radius: 255px 12px 225px 18px / 12px 225px 18px 255px;
   }
 
-  .text-report-metric {
-    @apply text-2xl font-semibold tabular-nums tracking-tight text-slate-900 md:text-3xl;
+  .doodle-post-it {
+    @apply bg-[#fff9b8] px-5 py-5;
+    border: 2px solid #333;
+    border-radius: 4px 18px 6px 22px / 22px 6px 18px 4px;
+    box-shadow: none;
   }
 
-  .report-card-boundary {
-    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  .doodle-chip {
+    font-family: var(--font-doodle-label);
+    @apply border-2 border-doodle-secondary bg-doodle-surface px-4 py-2 text-sm text-doodle-text transition-transform duration-200;
+    border-radius: 255px 8px 225px 12px / 8px 225px 12px 255px;
   }
 
-  .report-skeleton-pulse {
-    @apply animate-pulse;
+  .doodle-chip:hover {
+    @apply -rotate-2;
+    background-color: color-mix(in srgb, var(--color-doodle-primary) 35%, white);
+    background-image: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--color-doodle-primary) 50%, transparent) 40%,
+      color-mix(in srgb, var(--color-doodle-primary) 50%, transparent) 58%,
+      transparent 58%
+    );
+  }
+
+  .doodle-chip--active {
+    @apply -rotate-1 text-doodle-text;
+    background-color: color-mix(in srgb, var(--color-doodle-primary) 45%, white);
+    border-color: var(--color-doodle-secondary);
+    background-image: linear-gradient(
+      100deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-doodle-primary) 55%, transparent) 35%,
+      color-mix(in srgb, var(--color-doodle-primary) 70%, transparent) 65%,
+      transparent 100%
+    );
+  }
+
+  .doodle-scribble-hover {
+    @apply cursor-default transition-transform duration-200;
+  }
+
+  .doodle-scribble-hover:hover {
+    @apply -rotate-2;
+    background-color: rgba(254, 240, 138, 0.65);
+  }
+
+  .doodle-alert {
+    font-family: var(--font-doodle-label);
+    @apply border-2 border-doodle-danger bg-[#ffe4e6] px-4 py-3 text-doodle-danger;
+    border-radius: 12px 255px 18px 225px / 225px 18px 255px 12px;
+  }
+
+  .doodle-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .doodle-th,
+  .doodle-td {
+    @apply border border-stone-400 px-3 py-2 text-left text-sm;
+  }
+
+  .doodle-th {
+    font-family: var(--font-doodle-label);
+    @apply bg-[#f5f0e8] font-medium uppercase tracking-wide;
+  }
+
+  .doodle-skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-[#fffef8] focus:px-4 focus:py-2 focus:text-stone-900;
+    border: 2px solid #333;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+
+  .doodle-annotation {
+    font-family: var(--font-doodle-display);
+  }
+
+  .doodle-toggle-track {
+    border: 2.5px solid #2a2a2a;
+    background-color: #f5f0e8;
+    border-radius: 255px 18px 225px 14px / 14px 225px 18px 255px;
+  }
+
+  .doodle-toggle-knob {
+    font-family: var(--font-doodle-label);
+    @apply px-5 py-2 text-sm text-doodle-secondary transition-transform duration-200;
+    border-radius: 255px 12px 225px 10px / 10px 225px 12px 255px;
+  }
+
+  .doodle-toggle-knob:hover {
+    @apply -rotate-2;
+    background-color: rgba(254, 240, 138, 0.55);
+  }
+
+  .doodle-toggle-knob--on {
+    @apply -rotate-1 text-doodle-text;
+    background-color: color-mix(in srgb, var(--color-doodle-primary) 40%, white);
+    border: 2px solid var(--color-doodle-secondary);
+  }
+
+  .doodle-marker-bar {
+    background: linear-gradient(
+      90deg,
+      var(--color-doodle-warning) 0%,
+      var(--color-doodle-danger) 88%,
+      var(--color-doodle-secondary) 100%
+    );
+    border-right: 3px solid var(--color-doodle-secondary);
+    border-radius: 2px 8px 4px 10px / 10px 4px 8px 2px;
+  }
+
+  .doodle-carousel-dot {
+    @apply h-3 w-8 border-2 border-stone-800 bg-[#fffef8] transition-transform duration-200;
+    border-radius: 255px 8px 225px 8px / 8px 225px 8px 255px;
+  }
+
+  .doodle-carousel-dot--active {
+    @apply -rotate-2;
+    background-color: color-mix(in srgb, var(--color-doodle-primary) 50%, white);
+  }
+
+  .doodle-map-shell {
+    @apply border-[3px] border-doodle-secondary bg-[#ebe6dc];
+    border-radius: 6px 22px 8px 18px / 18px 8px 22px 6px;
+  }
+
+  .doodle-map-canvas {
+    filter: grayscale(0.82) sepia(0.12) contrast(0.95);
+  }
+
+  .doodle-polaroid {
+    @apply absolute z-20 max-w-[min(100%,220px)] border-2 border-stone-800 bg-[#fffef8] p-3;
+    border-radius: 4px 14px 6px 16px / 16px 6px 14px 4px;
+  }
+
+  .doodle-polaroid--origin {
+    @apply left-3 top-3;
+  }
+
+  .doodle-polaroid--dest {
+    @apply right-3 top-3;
+  }
+
+  .doodle-select {
+    font-family: var(--font-doodle-label);
+    @apply border-2 border-doodle-secondary bg-doodle-surface px-2 py-1.5 text-sm text-doodle-text;
+    border-radius: 255px 10px 225px 12px / 12px 225px 10px 255px;
+  }
+
+  .doodle-select:focus {
+    @apply outline-none;
+    background-color: #fef9c3;
+  }
+
+  .doodle-notebook-tab {
+    font-family: var(--font-doodle-label);
+    @apply absolute bottom-3 left-1/2 z-30 -translate-x-1/2 border-2 border-doodle-secondary bg-[#fff9b8] px-4 py-2 text-sm transition-transform duration-200;
+    border-radius: 255px 12px 225px 14px / 14px 225px 12px 255px;
+  }
+
+  .doodle-notebook-tab:hover {
+    @apply -rotate-2;
+  }
+
+  .doodle-notebook {
+    @apply pointer-events-none absolute right-0 top-0 z-20 h-full w-full max-w-md translate-x-full opacity-0 transition-all duration-300 ease-out;
+  }
+
+  .doodle-notebook--open {
+    @apply pointer-events-auto translate-x-0 opacity-100;
+  }
+
+  .doodle-notebook-inner {
+    @apply m-3 h-[calc(100%-1.5rem)] overflow-y-auto border-[2.5px] border-stone-800 bg-[#fffef8] p-4;
+    border-radius: 8px 4px 18px 6px / 6px 18px 4px 8px;
+  }
+
+  @media (max-width: 767px) {
+    .doodle-notebook {
+      @apply right-0 top-auto bottom-0 h-auto max-h-[62vh] max-w-none translate-x-0 translate-y-full;
+    }
+
+    .doodle-notebook--open {
+      @apply translate-y-0;
+    }
+
+    .doodle-polaroid--origin {
+      @apply relative left-auto top-auto mb-2 w-full max-w-none;
+    }
+
+    .doodle-polaroid--dest {
+      @apply relative right-auto top-auto mb-3 w-full max-w-none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .doodle-map-shell {
+      @apply pr-[min(26rem,42%)];
+    }
+
+    .doodle-notebook--open {
+      @apply translate-x-0;
+    }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .report-skeleton-pulse {
-    animation: none;
-    opacity: 0.85;
+  .doodle-chip,
+  .doodle-scribble-hover,
+  .doodle-toggle-knob,
+  .doodle-notebook,
+  .doodle-notebook-tab {
+    transition: none;
+  }
+
+  .doodle-chip:hover,
+  .doodle-scribble-hover:hover,
+  .doodle-toggle-knob:hover,
+  .doodle-notebook-tab:hover {
+    transform: none;
   }
 }
