@@ -32,24 +32,51 @@ export const SCROLL_STEP_COPY: ScrollyStepCopy[] = [
   },
 ]
 
+const VISIBILITY_THRESHOLDS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] as const
+
+/** Pick the scroll step whose section occupies the center band most strongly. */
+function resolveActiveStep(ratios: number[]): { index: number; progress: number } {
+  let bestIndex = 0
+  let bestRatio = 0
+
+  for (let index = 0; index < ratios.length; index += 1) {
+    const ratio = ratios[index] ?? 0
+    if (ratio > bestRatio) {
+      bestRatio = ratio
+      bestIndex = index
+    }
+  }
+
+  return { index: bestIndex, progress: bestRatio }
+}
+
 /** Scroll-step refs + intersection observers (call once in setup). */
 export function useScrollySteps() {
   const store = useCommuteDataStore()
   const stepRefs: Ref<HTMLElement | null>[] = Array.from({ length: SCROLL_STEP_COUNT }, () =>
     ref<HTMLElement | null>(null),
   )
+  const visibilityRatios = ref<number[]>(Array.from({ length: SCROLL_STEP_COUNT }, () => 0))
+
+  function syncActiveStep() {
+    const { index, progress } = resolveActiveStep(visibilityRatios.value)
+    if (progress <= 0) return
+    store.setActiveStep(index)
+    store.setStepScrollProgress(progress)
+  }
 
   stepRefs.forEach((stepRef, index) => {
     useIntersectionObserver(
       stepRef,
       ([entry]) => {
-        if (!entry?.isIntersecting) return
-        store.setActiveStep(index)
-        store.setStepScrollProgress(entry.intersectionRatio)
+        const next = [...visibilityRatios.value]
+        next[index] = entry?.isIntersecting ? entry.intersectionRatio : 0
+        visibilityRatios.value = next
+        syncActiveStep()
       },
       {
-        threshold: [0, 0.25, 0.5, 0.75, 1],
-        rootMargin: '-35% 0px -35% 0px',
+        threshold: [...VISIBILITY_THRESHOLDS],
+        rootMargin: '-42% 0px -42% 0px',
       },
     )
   })

@@ -22,21 +22,29 @@ const stageInteractive = computed(() => activeStep.value === 0 || activeStep.val
       Skip to story
     </a>
 
-    <div class="st-stage" :class="{ 'pointer-events-auto': stageInteractive }" aria-hidden="true">
+    <div class="st-stage" :class="{ 'st-stage--interactive': stageInteractive }" aria-hidden="true">
       <div class="st-stage__inner">
-        <MacroAggregates v-show="activeStep === 0" />
-        <TrendTimelineChart
-          v-show="activeStep === 1"
-          :scroll-progress="stepScrollProgress"
-        />
-        <DeviationLeaderboard v-show="activeStep === 2" />
-        <InteractiveRouteMap v-show="activeStep === 3" />
+        <Transition name="st-stage-fade" mode="out-in">
+          <MacroAggregates v-if="activeStep === 0" key="macro" class="st-stage__viz" />
+          <TrendTimelineChart
+            v-else-if="activeStep === 1"
+            key="trend"
+            class="st-stage__viz"
+            :scroll-progress="stepScrollProgress"
+          />
+          <DeviationLeaderboard v-else-if="activeStep === 2" key="deviation" class="st-stage__viz" />
+          <InteractiveRouteMap v-else-if="activeStep === 3" key="map" class="st-stage__viz" />
+        </Transition>
       </div>
     </div>
 
     <div id="scrolly-content" class="st-scroll">
-      <p v-if="loadError" class="st-step">
-        <span class="st-card text-st-danger">{{ loadError }}</span>
+      <p
+        v-if="loadError"
+        role="alert"
+        class="st-alert"
+      >
+        {{ loadError }}
       </p>
 
       <section

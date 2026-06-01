@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
+import { useEchartsHost } from '../composables/useEchartsHost'
 import { useCommuteDataStore } from '../stores/commuteDataStore'
 
 const props = defineProps<{
@@ -12,7 +13,6 @@ const store = useCommuteDataStore()
 const { historicalTrends, isLoading } = storeToRefs(store)
 
 const chartHost = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
 
 const quarters = computed(() => historicalTrends.value.map((point) => point.reporting_quarter))
 
@@ -22,7 +22,7 @@ const visibleCount = computed(() => {
   return Math.max(1, Math.ceil(quarters.value.length * progress))
 })
 
-function buildOption(): echarts.EChartsOption {
+function buildOption(): EChartsOption {
   const slice = historicalTrends.value.slice(0, visibleCount.value)
   const labels = slice.map((point) => point.reporting_quarter)
   const times = slice.map((point) => point.averageTimeMinutes)
@@ -87,55 +87,19 @@ function buildOption(): echarts.EChartsOption {
   }
 }
 
-function renderChart() {
-  if (!chart) return
-  chart.setOption(buildOption(), { notMerge: true })
-}
+useEchartsHost(chartHost, buildOption, [historicalTrends, visibleCount, () => props.scrollProgress])
 
-onMounted(() => {
-  if (!chartHost.value) return
-  chart = echarts.init(chartHost.value, undefined, { renderer: 'canvas' })
-  renderChart()
-  window.addEventListener('resize', handleResize)
-})
-
-function handleResize() {
-  chart?.resize()
-}
-
-watch([historicalTrends, visibleCount], () => renderChart())
-watch(() => props.scrollProgress, () => renderChart())
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  chart?.dispose()
-  chart = null
-})
-
-/** Progressive draw driven by scrollytelling scroll progress (0–1). */
-function setScrollProgress(progress: number) {
-  const count =
-    quarters.value.length > 0
-      ? Math.max(1, Math.ceil(quarters.value.length * Math.max(progress, 0.15)))
-      : 0
-  if (!chart || count === 0) return
-  const slice = historicalTrends.value.slice(0, count)
-  chart.setOption({
-    xAxis: { data: slice.map((point) => point.reporting_quarter) },
-    series: [
-      { data: slice.map((point) => point.averageTimeMinutes) },
-      { data: slice.map((point) => point.averageCostAud) },
-    ],
-  })
-}
-
-defineExpose({ setScrollProgress })
 </script>
 
 <template>
   <div class="st-chart-host relative">
     <p v-if="isLoading" class="st-loading">Loading trend data…</p>
-    <div ref="chartHost" class="h-full w-full min-h-screen" role="img" aria-label="Commute trend timeline" />
+    <div
+      ref="chartHost"
+      class="st-chart-canvas"
+      role="img"
+      aria-label="Commute trend timeline"
+    />
     <table class="sr-only">
       <caption>Historical commute trends</caption>
       <thead>

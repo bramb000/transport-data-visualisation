@@ -18,6 +18,7 @@ import {
   CITY_WIDE_ORIGIN_SA3,
   DEFAULT_DESTINATION_SA3,
   DEFAULT_REPORTING_QUARTER,
+  SCROLL_STEP_COUNT,
 } from '../types/commuteData'
 import type {
   CorridorSummaryPayload,
@@ -284,7 +285,9 @@ export const useCommuteDataStore = defineStore('commuteData', () => {
   }
 
   function setActiveStep(step: number) {
-    activeStep.value = Math.max(0, Math.min(step, 3))
+    const clamped = Math.max(0, Math.min(step, SCROLL_STEP_COUNT - 1))
+    if (activeStep.value === clamped) return
+    activeStep.value = clamped
     stepScrollProgress.value = 0
   }
 

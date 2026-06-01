@@ -1,5 +1,5 @@
 import type { GeoJSONSource, Map, StyleSpecification } from 'maplibre-gl'
-import { onMounted, onUnmounted, shallowRef, watch, type Ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, shallowRef, watch, type Ref } from 'vue'
 import { loadMapLibre } from '../lib/maplibreLoader'
 import { buildBezierArc } from '../utils/bezierArc'
 import type { Sa3Centroid } from '../utils/sa3Centroids'
@@ -9,6 +9,7 @@ const ARC_GLOW_LAYER = 'route-arc-glow'
 const ARC_LINE_LAYER = 'route-arc-line'
 const ORIGIN_LAYER = 'route-origin'
 const DEST_LAYER = 'route-dest'
+const MIN_MAP_PX = 48
 
 const DARK_BASE: StyleSpecification = {
   version: 8,
@@ -37,8 +38,8 @@ const DARK_BASE: StyleSpecification = {
 
 function basemapStyle(): StyleSpecification | string {
   const key = import.meta.env.VITE_MAPTILER_API_KEY?.trim()
-  if (!key) return DARK_BASE
-  return `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${key}`
+  if (key) return `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${key}`
+  return DARK_BASE
 }
 
 interface RouteEndpoints {
@@ -50,11 +51,14 @@ export function useRouteMap(containerRef: Ref<HTMLElement | null>, endpoints: Re
   const map = shallowRef<Map | null>(null)
   const mapError = shallowRef<string | null>(null)
   const isMapLoading = shallowRef(true)
+  let resizeObserver: ResizeObserver | null = null
+  let maplibreglModule: Awaited<ReturnType<typeof loadMapLibre>> | null = null
 
-  function updateArc(maplibregl: Awaited<ReturnType<typeof loadMapLibre>>) {
+  function updateArc() {
     const instance = map.value
+    const maplibregl = maplibreglModule
     const { origin, destination } = endpoints.value
-    if (!instance) return
+    if (!instance || !maplibregl) return
 
     if (!origin || !destination) {
       const source = instance.getSource(ARC_SOURCE_ID) as GeoJSONSource | undefined
@@ -62,7 +66,12 @@ export function useRouteMap(containerRef: Ref<HTMLElement | null>, endpoints: Re
       return
     }
 
-    const coordinates = buildBezierArc([origin.lng, origin.lat], [destination.lng, destination.lat], 56, 0.14)
+    const coordinates = buildBezierArc(
+      [origin.lng, origin.lat],
+      [destination.lng, destination.lat],
+      56,
+      0.14,
+    )
     const data = {
       type: 'FeatureCollection' as const,
       features: [
@@ -142,44 +151,68 @@ export function useRouteMap(containerRef: Ref<HTMLElement | null>, endpoints: Re
     instance.fitBounds(bounds, { padding: 80, maxZoom: 11, duration: 800 })
   }
 
-  onMounted(() => {
-    if (!containerRef.value) {
+  async function ensureMap() {
+    const container = containerRef.value
+    if (!container || map.value) return
+
+    const { width, height } = container.getBoundingClientRect()
+    if (width < MIN_MAP_PX || height < MIN_MAP_PX) return
+
+    try {
+      maplibreglModule = await loadMapLibre()
+      map.value = new maplibreglModule.Map({
+        container,
+        style: basemapStyle(),
+        center: [151.05, -33.87],
+        zoom: 9.2,
+        attributionControl: {},
+        cooperativeGestures: true,
+      })
+
+      map.value.on('load', () => {
+        updateArc()
+        isMapLoading.value = false
+      })
+    } catch (error) {
+      mapError.value = error instanceof Error ? error.message : 'Map failed to load.'
+      isMapLoading.value = false
+    }
+  }
+
+  function handleContainerResize() {
+    if (!map.value) {
+      void ensureMap()
+      return
+    }
+    map.value.resize()
+    if (map.value.isStyleLoaded()) updateArc()
+  }
+
+  onMounted(async () => {
+    await nextTick()
+    const container = containerRef.value
+    if (!container) {
       isMapLoading.value = false
       return
     }
 
-    void (async () => {
-      try {
-        const maplibregl = await loadMapLibre()
-        map.value = new maplibregl.Map({
-          container: containerRef.value!,
-          style: basemapStyle(),
-          center: [151.05, -33.87],
-          zoom: 9.2,
-          attributionControl: {},
-        })
-
-        map.value.on('load', () => {
-          updateArc(maplibregl)
-          isMapLoading.value = false
-        })
-      } catch (error) {
-        mapError.value = error instanceof Error ? error.message : 'Map failed to load.'
-        isMapLoading.value = false
-      }
-    })()
+    resizeObserver = new ResizeObserver(() => handleContainerResize())
+    resizeObserver.observe(container)
+    window.addEventListener('resize', handleContainerResize)
+    await ensureMap()
   })
 
-  watch(endpoints, async () => {
-    const instance = map.value
-    if (!instance?.isStyleLoaded()) return
-    const maplibregl = await loadMapLibre()
-    updateArc(maplibregl)
+  watch(endpoints, () => {
+    if (!map.value?.isStyleLoaded()) return
+    updateArc()
   })
 
   onUnmounted(() => {
+    resizeObserver?.disconnect()
+    window.removeEventListener('resize', handleContainerResize)
     map.value?.remove()
     map.value = null
+    maplibreglModule = null
   })
 
   return { map, mapError, isMapLoading }

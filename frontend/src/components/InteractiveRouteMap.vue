@@ -44,7 +44,7 @@ onMounted(async () => {
 
 <template>
   <div class="st-map-host relative">
-    <div ref="mapContainer" class="h-full w-full min-h-screen" role="region" aria-label="Interactive route map" />
+    <div ref="mapContainer" class="st-chart-canvas" role="region" aria-label="Interactive route map" />
 
     <p v-if="isMapLoading" class="st-loading">Loading map…</p>
     <p v-if="mapError" class="st-loading text-st-danger">{{ mapError }}</p>

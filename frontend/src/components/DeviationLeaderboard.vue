@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import * as echarts from 'echarts'
+import type { CustomSeriesRenderItemAPI, CustomSeriesRenderItemParams, EChartsOption } from 'echarts'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
+import { useEchartsHost } from '../composables/useEchartsHost'
 import { useCommuteDataStore } from '../stores/commuteDataStore'
 
 const store = useCommuteDataStore()
 const { leaveDeviations, arriveDeviations, isLoading } = storeToRefs(store)
 
 const chartHost = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
 
 const chartRows = computed(() => {
   const leave = leaveDeviations.value.map((row) => ({
@@ -26,7 +26,7 @@ const chartRows = computed(() => {
   return [...leave, ...arrive].sort((left, right) => right.penalty - left.penalty).slice(0, 10)
 })
 
-function buildOption(): echarts.EChartsOption {
+function buildOption(): EChartsOption {
   const names = chartRows.value.map((row) => row.name)
   const offPeak = chartRows.value.map((row) => row.offPeak)
   const rush = chartRows.value.map((row) => row.rush)
@@ -68,7 +68,7 @@ function buildOption(): echarts.EChartsOption {
       {
         name: 'Gap',
         type: 'custom',
-        renderItem: (_params, api) => {
+        renderItem: (_params: CustomSeriesRenderItemParams, api: CustomSeriesRenderItemAPI) => {
           const index = api.value(1) as number
           const off = offPeak[index] ?? 0
           const rushVal = rush[index] ?? 0
@@ -87,23 +87,7 @@ function buildOption(): echarts.EChartsOption {
   }
 }
 
-onMounted(() => {
-  if (!chartHost.value) return
-  chart = echarts.init(chartHost.value)
-  chart.setOption(buildOption())
-  window.addEventListener('resize', handleResize)
-})
-
-function handleResize() {
-  chart?.resize()
-}
-
-watch(chartRows, () => chart?.setOption(buildOption(), { notMerge: true }))
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  chart?.dispose()
-})
+useEchartsHost(chartHost, buildOption, [chartRows])
 
 const tableRows = computed(() => [...leaveDeviations.value, ...arriveDeviations.value])
 </script>
@@ -113,7 +97,7 @@ const tableRows = computed(() => [...leaveDeviations.value, ...arriveDeviations.
     <p v-if="isLoading" class="st-loading">Loading deviation data…</p>
     <div
       ref="chartHost"
-      class="h-full w-full min-h-screen"
+      class="st-chart-canvas"
       role="img"
       aria-label="Rush hour dumbbell chart: off-peak vs rush travel times by suburb"
     />
