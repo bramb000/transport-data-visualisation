@@ -1,6 +1,6 @@
 """Unit tests for travel_engine cost calculations."""
 
-from services.travel_engine import calculate_opal_fare
+from services.cost_engine import calculate_opal_fare
 
 
 def test_opal_fare_band_0_3km() -> None:

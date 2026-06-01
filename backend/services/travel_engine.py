@@ -18,9 +18,16 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
+
+from services.cost_engine import (
+    DEFAULT_FUEL_CONSUMPTION_L_PER_100KM,
+    calculate_car_trip_cost,
+    calculate_opal_fare,
+    calculate_pt_trip_cost,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +38,7 @@ ORS_DIRECTIONS_URL = "https://api.openrouteservice.org/v2/directions/driving-car
 FUELCHECK_TOKEN_URL = "https://api.onegov.nsw.gov.au/oauth/client_credential/accesstoken"
 
 DEFAULT_REQUEST_TIMEOUT = 30.0
-DEFAULT_FUEL_CONSUMPTION_L_PER_100KM = 10.0
+DEFAULT_REPORTING_QUARTER = "Q4 2024"
 MAX_PT_JOURNEY_OPTIONS = 3
 FALLBACK_UNLEADED_91_PRICE_AUD = 1.95  # Used only when FuelCheck credentials are absent
 FUELCHECK_UNLEADED_91_CODE = "U91"  # Unleaded 91 — not E7 (see FuelPriceCheck v1 ref data)
@@ -82,36 +89,6 @@ def _is_walking_leg(leg: Dict[str, Any]) -> bool:
         return True
     name = (product.get("name") or "").lower()
     return name in {"footpath", "walking", "walk"}
-
-
-def calculate_opal_fare(distance_km: float, peak: bool = True) -> Dict[str, Union[float, str]]:
-    """Map transit distance to Sydney adult Opal bus fare bands.
-
-    Bands (km): 0–3, 3–8, 8+.
-    Returns peak fare by default; off-peak values are included for reference.
-    """
-    if distance_km < 0:
-        raise ValueError("distance_km must be non-negative")
-
-    off_peak_map = {"0_3km": 2.31, "3_8km": 3.14, "over_8km": 4.03}
-
-    if distance_km <= 3.0:
-        band_label, peak_fare = "0_3km", 3.30
-    elif distance_km <= 8.0:
-        band_label, peak_fare = "3_8km", 4.49
-    else:
-        band_label, peak_fare = "over_8km", 5.77
-
-    selected_fare = peak_fare if peak else off_peak_map[band_label]
-
-    return {
-        "distance_km": round(distance_km, 3),
-        "fare_band": band_label,
-        "fare_aud": round(selected_fare, 2),
-        "fare_peak_aud": round(peak_fare, 2),
-        "fare_off_peak_aud": round(off_peak_map[band_label], 2),
-        "fare_type": "opal_adult_bus_peak" if peak else "opal_adult_bus_off_peak",
-    }
 
 
 async def _fetch_fuelcheck_token(client: httpx.AsyncClient) -> str:
@@ -261,8 +238,10 @@ async def calculate_driving_cost(
     latitude: float = -33.8688,
     longitude: float = 151.2093,
     suburb: str = "Sydney",
+    corridor_toll_per_trip_aud: float = 0.0,
+    reporting_quarter: str = DEFAULT_REPORTING_QUARTER,
 ) -> Dict[str, Any]:
-    """Calculate driving fuel cost using FuelCheck average Unleaded 91 price."""
+    """Calculate driving cost: fuel (10.5 L/100 km) + corridor tolls with weekly cap."""
     if distance_km < 0:
         raise ValueError("distance_km must be non-negative")
 
@@ -277,16 +256,18 @@ async def calculate_driving_cost(
             longitude=longitude,
             suburb=suburb,
         )
-        litres = distance_km * (consumption_l_per_100km / 100.0)
-        cost_aud = litres * fuel_info["price_per_litre"]
+        cost = calculate_car_trip_cost(
+            distance_km,
+            float(fuel_info["price_per_litre"]),
+            corridor_toll_per_trip_aud,
+            reporting_quarter,
+            consumption_l_per_100km=consumption_l_per_100km,
+        )
         return {
-            "distance_km": round(distance_km, 3),
-            "consumption_l_per_100km": consumption_l_per_100km,
-            "fuel_price_per_litre": fuel_info["price_per_litre"],
+            **cost,
+            "cost_aud": cost["single_trip_cost_aud"],
             "fuel_price_source": fuel_info.get("source"),
             "fuel_station_count": fuel_info.get("station_count", 0),
-            "litres_used": round(litres, 3),
-            "cost_aud": round(cost_aud, 2),
             "warning": fuel_info.get("warning"),
         }
     finally:
@@ -332,7 +313,12 @@ def _build_route_label(route_numbers: List[str], modes: List[str]) -> str:
     return "Public transport"
 
 
-def _parse_tfnsw_journey(journey: Dict[str, Any], option_rank: int = 1) -> Dict[str, Any]:
+def _parse_tfnsw_journey(
+    journey: Dict[str, Any],
+    option_rank: int = 1,
+    *,
+    reporting_quarter: str = DEFAULT_REPORTING_QUARTER,
+) -> Dict[str, Any]:
     legs = journey.get("legs") or []
     transit_legs: List[Dict[str, Any]] = []
     modes: List[str] = []
@@ -371,6 +357,7 @@ def _parse_tfnsw_journey(journey: Dict[str, Any], option_rank: int = 1) -> Dict[
 
     distance_km = transit_distance_m / 1000.0
     fare = calculate_opal_fare(distance_km)
+    pt_cost = calculate_pt_trip_cost(distance_km, reporting_quarter)
 
     return {
         "duration_min": round(total_duration_sec / 60.0, 1),
@@ -381,7 +368,9 @@ def _parse_tfnsw_journey(journey: Dict[str, Any], option_rank: int = 1) -> Dict[
         "option_rank": option_rank,
         "legs": transit_legs,
         "cost_aud": fare["fare_aud"],
+        "weekly_cost_aud": pt_cost["weekly_cost_aud"],
         "fare": fare,
+        "weekly": pt_cost["weekly"],
         "interchanges": journey.get("interchanges"),
     }
 
@@ -406,6 +395,7 @@ def _pt_option_to_result(option: Dict[str, Any]) -> Dict[str, Any]:
         "duration_min": option["duration_min"],
         "distance_km": option["transit_distance_km"],
         "cost_aud": option["cost_aud"],
+        "weekly_cost_aud": option.get("weekly_cost_aud"),
         "modes": option["modes"],
         "route_numbers": option["route_numbers"],
         "route_label": option["route_label"],
@@ -421,6 +411,8 @@ async def _fetch_tfnsw_journey_options(
     client: httpx.AsyncClient,
     origin: Coords,
     destination: Coords,
+    *,
+    reporting_quarter: str = DEFAULT_REPORTING_QUARTER,
 ) -> List[Dict[str, Any]]:
     """Fetch and parse up to three distinct public transport journey options."""
     api_key = _env("TFNSW_API_KEY")
@@ -458,7 +450,7 @@ async def _fetch_tfnsw_journey_options(
 
     unique_journeys = _dedupe_journey_options(journeys)
     return [
-        _parse_tfnsw_journey(journey, option_rank=index)
+        _parse_tfnsw_journey(journey, option_rank=index, reporting_quarter=reporting_quarter)
         for index, journey in enumerate(unique_journeys, start=1)
     ]
 
@@ -530,12 +522,21 @@ async def fetch_commute_data(
     *,
     fuel_suburb: str = "Sydney",
     fuel_consumption_l_per_100km: float = DEFAULT_FUEL_CONSUMPTION_L_PER_100KM,
+    corridor_toll_per_trip_aud: float = 0.0,
+    reporting_quarter: str = DEFAULT_REPORTING_QUARTER,
 ) -> Dict[str, Any]:
     """Fetch and normalize multimodal PT and driving commute data in parallel."""
     errors: List[str] = []
 
     async with httpx.AsyncClient() as client:
-        pt_task = asyncio.create_task(_fetch_tfnsw_journey_options(client, origin_coords, dest_coords))
+        pt_task = asyncio.create_task(
+            _fetch_tfnsw_journey_options(
+                client,
+                origin_coords,
+                dest_coords,
+                reporting_quarter=reporting_quarter,
+            )
+        )
         drive_task = asyncio.create_task(_fetch_ors_driving_route(client, origin_coords, dest_coords))
 
         pt_result: Optional[Dict[str, Any]] = None
@@ -564,11 +565,19 @@ async def fetch_commute_data(
                     latitude=(origin_coords[0] + dest_coords[0]) / 2,
                     longitude=(origin_coords[1] + dest_coords[1]) / 2,
                     suburb=fuel_suburb,
+                    corridor_toll_per_trip_aud=corridor_toll_per_trip_aud,
+                    reporting_quarter=reporting_quarter,
                 )
                 driving = {
                     "duration_min": drive_route["duration_min"],
                     "distance_km": drive_route["distance_km"],
                     "cost_aud": cost["cost_aud"],
+                    "weekly_cost_aud": cost["weekly_cost_aud"],
+                    "fuel_cost_aud": cost["fuel_cost_aud"],
+                    "toll_cost_aud": cost["toll_cost_aud"],
+                    "net_toll_cost_aud": cost["net_toll_cost_aud"],
+                    "toll_subsidy_aud": cost["toll_subsidy_aud"],
+                    "corridor_toll_per_trip_aud": cost["corridor_toll_per_trip_aud"],
                     "fuel_price_per_litre": cost["fuel_price_per_litre"],
                     "fuel_price_source": cost.get("fuel_price_source"),
                     "consumption_l_per_100km": cost["consumption_l_per_100km"],

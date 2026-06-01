@@ -2,7 +2,7 @@
 import maplibregl, { type ExpressionSpecification, type GeoJSONSource, type Map } from 'maplibre-gl'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useCommuteReportStore } from '../stores/commuteReportStore'
+import { useCommuteMapStore } from '../stores/commuteMapStore'
 import type {
   ChoroplethMetric,
   FlowCorridor,
@@ -31,7 +31,7 @@ const SYDNEY_BOUNDS: maplibregl.LngLatBoundsLike = [
   [151.35, -33.65],
 ]
 
-const reportStore = useCommuteReportStore()
+const reportStore = useCommuteMapStore()
 const {
   mapMode,
   choroplethMetric,

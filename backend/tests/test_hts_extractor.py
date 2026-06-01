@@ -39,6 +39,7 @@ def test_clean_hts_commuters_apportions_commute_by_mode() -> None:
     assert len(auburn_driver) == 1
     assert auburn_driver.iloc[0]["total_trips"] == 40_000
     assert auburn_driver.iloc[0]["destination_sa3"] == "Unspecified"
+    assert auburn_driver.iloc[0]["reporting_quarter"] == "Q4 2025"
 
     bankstown_walk = cleaned[
         (cleaned["origin_sa3"] == "Bankstown") & (cleaned["mode"] == "Walk")

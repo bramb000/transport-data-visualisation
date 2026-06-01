@@ -98,6 +98,15 @@ def load_hts_sa3_workbook(content: bytes) -> Tuple[pd.DataFrame, pd.DataFrame]:
     return mode_df, purpose_df
 
 
+def financial_year_to_reporting_quarter(financial_year: str) -> str:
+    """Map HTS financial year labels (e.g. ``2023/24``) to a reporting quarter."""
+    match = re.match(r"^(\d{4})/(\d{2})$", financial_year.strip())
+    if not match:
+        raise ValueError(f"Invalid HTS financial_year '{financial_year}'")
+    end_year = int(match.group(1)) + 1
+    return f"Q4 {end_year}"
+
+
 def clean_hts_commuters(
     mode_df: pd.DataFrame,
     purpose_df: pd.DataFrame,
@@ -157,14 +166,18 @@ def clean_hts_commuters(
     ).round().astype(int)
 
     cleaned = merged[merged["total_trips"] > 0][
-        ["origin_sa3", "mode", "total_trips"]
+        ["financial_year", "origin_sa3", "mode", "total_trips"]
     ].copy()
     cleaned["destination_sa3"] = UNSPECIFIED_DESTINATION
+    cleaned["reporting_quarter"] = cleaned["financial_year"].map(financial_year_to_reporting_quarter)
 
     cleaned = (
-        cleaned.groupby(["origin_sa3", "destination_sa3", "mode"], as_index=False)["total_trips"]
+        cleaned.groupby(
+            ["reporting_quarter", "origin_sa3", "destination_sa3", "mode"],
+            as_index=False,
+        )["total_trips"]
         .sum()
-        .sort_values(["origin_sa3", "mode"])
+        .sort_values(["reporting_quarter", "origin_sa3", "mode"])
         .reset_index(drop=True)
     )
 
@@ -204,6 +217,7 @@ def create_supabase_client() -> Client:
 def dataframe_to_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
     return [
         {
+            "reporting_quarter": row.reporting_quarter,
             "origin_sa3": row.origin_sa3,
             "destination_sa3": row.destination_sa3,
             "mode": row.mode,
@@ -223,7 +237,11 @@ def bulk_insert_baselines(supabase: Client, df: pd.DataFrame) -> int:
     inserted = 0
     for start in range(0, len(records), INSERT_BATCH_SIZE):
         batch = records[start : start + INSERT_BATCH_SIZE]
-        response = supabase.table("hts_commuter_baselines").insert(batch).execute()
+        response = (
+            supabase.table("hts_commuter_baselines")
+            .upsert(batch, on_conflict="reporting_quarter,origin_sa3,destination_sa3,mode")
+            .execute()
+        )
         inserted += len(response.data or [])
         logger.info("Inserted batch %d–%d (%d rows)", start + 1, start + len(batch), len(batch))
 

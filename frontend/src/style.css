@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+@layer components {
+  .text-report-kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.2em] text-slate-500;
+  }
+
+  .text-report-title {
+    @apply font-serif text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-4xl;
+  }
+
+  .text-report-subtitle {
+    @apply text-sm leading-relaxed text-slate-600 md:text-base;
+  }
+
+  .text-report-section-heading {
+    @apply text-lg font-semibold tracking-tight text-slate-900 md:text-xl;
+  }
+
+  .text-report-card-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .text-report-metric {
+    @apply text-2xl font-semibold tabular-nums tracking-tight text-slate-900 md:text-3xl;
+  }
+
+  .report-card-boundary {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .report-skeleton-pulse {
+    @apply animate-pulse;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-skeleton-pulse {
+    animation: none;
+    opacity: 0.85;
+  }
+}

@@ -26,7 +26,8 @@ export async function fetchSupabaseHealth(): Promise<{ status: string; rowCount:
 
   const { url, anonKey } = requireSupabaseConfig()
   const response = await fetch(
-    `${url}/rest/v1/commute_metrics?select=id&limit=1`,
+    // Ping a table that exists in this project (read-only via anon key + RLS).
+    `${url}/rest/v1/historical_commute_snapshots?select=id&limit=1`,
     {
       headers: {
         Accept: 'application/json',
