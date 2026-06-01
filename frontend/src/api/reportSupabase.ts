@@ -64,6 +64,14 @@ export async function fetchReportSummaryRows(
   })
 }
 
+/** All snapshot rows (all origins / quarters) for trend aggregation. */
+export async function fetchAllHistoricalSnapshots(): Promise<HistoricalCommuteSnapshotRow[]> {
+  return fetchSupabaseRows<HistoricalCommuteSnapshotRow>('historical_commute_snapshots', {
+    select: '*',
+    order: 'reporting_quarter.asc',
+  })
+}
+
 /** Chronological snapshot rows for an origin across all quarters. */
 export async function fetchHistoricalSnapshotRows(
   originSa3: string,

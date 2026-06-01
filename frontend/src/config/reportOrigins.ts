@@ -1,4 +1,4 @@
-import { CITY_WIDE_ORIGIN_SA3 } from '../types/commuteStory'
+import { CITY_WIDE_ORIGIN_SA3 } from '../types/commuteData'
 
 /** Origin SA3 labels available in the data story explorer. */
 export const ORIGIN_SA3_OPTIONS = [

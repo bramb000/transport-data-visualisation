@@ -1,2 +1,9 @@
 @import "tailwindcss";
-@import "./design/system.css";
+@import "./design/storytelling-editorial.css";
+
+@layer base {
+  body {
+    @apply bg-st-canvas text-st-ink antialiased;
+    font-family: var(--font-st-body);
+  }
+}
